@@ -18,10 +18,6 @@ export function formatHumidity(humidity: number): string {
   return `${humidity}%`;
 }
 
-export function formatVisibility(visibility: number): string {
-  return `${(visibility / 1000).toFixed(1)} km`;
-}
-
 export function formatUVIndex(uvi: number): string {
   return `${uvi.toFixed(1)}`;
 }
@@ -48,11 +44,6 @@ export function formatDayShort(timestamp: number, timezoneOffset: number): strin
   return format(date, 'EEE');
 }
 
-export function formatDate(timestamp: number, timezoneOffset: number): string {
-  const date = new Date((timestamp + timezoneOffset) * 1000);
-  return format(date, 'MMMM d, yyyy');
-}
-
 export function getWeatherIcon(iconCode: string): string {
   return WEATHER_ICONS[iconCode] || '🌤️';
 }
@@ -67,31 +58,25 @@ export function getCurrentWeatherInfo(
   timezoneOffset: number
 ): {
   temp: string;
-  feelsLike: string;
   condition: string;
   icon: string;
   humidity: string;
   wind: string;
   windDir: string;
   pressure: string;
-  visibility: string;
   uv: string;
-  sunrise: string;
-  sunset: string;
+  clouds: string;
 } {
   return {
     temp: formatTemperature(current.temp),
-    feelsLike: formatTemperature(current.feels_like),
     condition: getWeatherDescription(current.weather),
     icon: getWeatherIcon(current.weather[0]?.icon || '01d'),
     humidity: formatHumidity(current.humidity),
     wind: formatWindSpeed(current.wind_speed),
     windDir: getWindDirection(current.wind_deg),
     pressure: formatPressure(current.pressure),
-    visibility: formatVisibility(current.visibility),
     uv: formatUVIndex(current.uvi),
-    sunrise: formatTime(current.sunrise, timezoneOffset),
-    sunset: formatTime(current.sunset, timezoneOffset),
+    clouds: `${current.clouds}%`,
   };
 }
 
@@ -104,16 +89,15 @@ export function processHourlyForecast(
     time: formatHour(hour.dt, timezoneOffset),
     timestamp: hour.dt,
     temp: Math.round(hour.temp),
-    feelsLike: Math.round(hour.feels_like),
-    pop: Math.round(hour.pop * 100),
+    pop: hour.pop ? Math.round(hour.pop * 100) : 0,
     precipitation: hour.rain?.['1h'] || hour.snow?.['1h'] || 0,
     icon: getWeatherIcon(hour.weather[0]?.icon || '01d'),
     condition: getWeatherDescription(hour.weather),
     windSpeed: Math.round(hour.wind_speed * 3.6),
     windDir: getWindDirection(hour.wind_deg),
     humidity: hour.humidity,
-    clouds: hour.clouds,
-    uvi: hour.uvi,
+    clouds: hour.clouds ?? 0,
+    uvi: hour.uvi ?? 0,
     pressure: hour.pressure,
   }));
 }
@@ -128,16 +112,14 @@ export function processDailyForecast(
     timestamp: day.dt,
     tempMax: Math.round(day.temp.max),
     tempMin: Math.round(day.temp.min),
-    pop: Math.round(day.pop * 100),
+    pop: day.pop ? Math.round(day.pop * 100) : 0,
     precipitation: day.rain || day.snow || 0,
     icon: getWeatherIcon(day.weather[0]?.icon || '01d'),
     condition: getWeatherDescription(day.weather),
-    windSpeed: Math.round(day.wind_speed * 3.6),
-    windDir: getWindDirection(day.wind_deg),
-    humidity: day.humidity,
-    uvi: day.uvi,
-    sunrise: formatTime(day.sunrise, timezoneOffset),
-    sunset: formatTime(day.sunset, timezoneOffset),
+    windSpeed: day.wind_speed ? Math.round(day.wind_speed * 3.6) : 0,
+    windDir: day.wind_deg ? getWindDirection(day.wind_deg) : '',
+    humidity: day.humidity ?? 0,
+    uvi: day.uvi ?? 0,
   }));
 }
 
@@ -149,25 +131,19 @@ export function generateWeatherInsights(
 ): { type: 'warning' | 'info' | 'success'; message: string; icon: string }[] {
   const insights: { type: 'warning' | 'info' | 'success'; message: string; icon: string }[] = [];
 
-  const next24Hours = hourly.slice(0, 24);
+  const next24Hours = hourly.slice(0, 8);
+  if (next24Hours.length === 0) {
+    insights.push({ type: 'info', message: 'No forecast data available', icon: '🌤' });
+    return insights;
+  }
+
   const maxTemp = Math.max(...next24Hours.map((h) => h.temp));
   const minTemp = Math.min(...next24Hours.map((h) => h.temp));
-  const maxPop = Math.max(...next24Hours.map((h) => h.pop));
   const maxWind = Math.max(...next24Hours.map((h) => h.wind_speed));
-  const maxUvi = Math.max(...next24Hours.map((h) => h.uvi));
 
-  const rainHours = next24Hours.filter((h) => h.pop > 0.5);
-  const heavyRainHours = next24Hours.filter((h) => h.pop > 0.7 && (h.rain?.['1h'] || 0) > 5);
+  const rainHours = next24Hours.filter((h) => (h.rain?.['1h'] || 0) > 0.5);
 
-  if (heavyRainHours.length > 0) {
-    const firstHeavy = heavyRainHours[0];
-    const time = formatTime(firstHeavy.dt, timezoneOffset);
-    insights.push({
-      type: 'warning',
-      message: `Heavy rain expected around ${time}`,
-      icon: '🌧',
-    });
-  } else if (rainHours.length > 6) {
+  if (rainHours.length > 2) {
     insights.push({
       type: 'info',
       message: 'Rain likely throughout the day',
@@ -178,7 +154,7 @@ export function generateWeatherInsights(
   if (maxTemp - minTemp > 8) {
     insights.push({
       type: 'info',
-      message: `Temperature will vary by ${Math.round(maxTemp - minTemp)}°C today`,
+      message: `Temperature will vary by ${Math.round(maxTemp - minTemp)}°C`,
       icon: '🌡',
     });
   }
@@ -195,16 +171,12 @@ export function generateWeatherInsights(
     }
   }
 
-  if (maxUvi > 7) {
-    const uvTime = next24Hours.find((h) => h.uvi === maxUvi);
-    if (uvTime) {
-      const time = formatTime(uvTime.dt, timezoneOffset);
-      insights.push({
-        type: 'warning',
-        message: `UV index reaches ${maxUvi.toFixed(1)} around ${time} - use sun protection`,
-        icon: '🔆',
-      });
-    }
+  if (current.uvi < 3) {
+    insights.push({
+      type: 'success',
+      message: 'Low UV index - minimal sun protection needed',
+      icon: '🔆',
+    });
   }
 
   const tomorrow = daily[1];
@@ -223,22 +195,6 @@ export function generateWeatherInsights(
         icon: '🌡',
       });
     }
-
-    if (tomorrow.pop > 0.7) {
-      insights.push({
-        type: 'warning',
-        message: `High chance of rain tomorrow (${Math.round(tomorrow.pop * 100)}%)`,
-        icon: '🌧',
-      });
-    }
-  }
-
-  if (current.uvi < 3) {
-    insights.push({
-      type: 'success',
-      message: 'Low UV index - minimal sun protection needed',
-      icon: '🔆',
-    });
   }
 
   if (insights.length === 0) {
@@ -256,7 +212,6 @@ export type HourlyForecastItem = {
   time: string;
   timestamp: number;
   temp: number;
-  feelsLike: number;
   pop: number;
   precipitation: number;
   icon: string;
@@ -283,8 +238,6 @@ export type DailyForecastItem = {
   windDir: string;
   humidity: number;
   uvi: number;
-  sunrise: string;
-  sunset: string;
   index?: number;
 };
 

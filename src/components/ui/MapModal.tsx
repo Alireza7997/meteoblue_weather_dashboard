@@ -17,7 +17,7 @@ export function MapModal({ selectedLocation, onLocationSelect, onClose }: MapMod
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-5xl aspect-video glass-strong rounded-2xl overflow-hidden shadow-2xl animate-bounce-in">
+      <div className="relative w-full max-w-5xl h-[70vh] glass-strong rounded-2xl overflow-hidden shadow-2xl animate-bounce-in">
         <div className="absolute top-4 right-4 z-10">
           <button
             onClick={onClose}

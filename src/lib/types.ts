@@ -11,20 +11,21 @@ export type Location = AppLocation;
 
 export interface CurrentWeather {
   dt: number;
-  sunrise: number;
-  sunset: number;
   temp: number;
-  feels_like: number;
   pressure: number;
   humidity: number;
-  dew_point: number;
   uvi: number;
   clouds: number;
-  visibility: number;
   wind_speed: number;
   wind_deg: number;
-  wind_gust?: number;
   weather: WeatherCondition[];
+  // Fields NOT available in basic-1h, optional
+  feels_like?: number;
+  dew_point?: number;
+  visibility?: number;
+  wind_gust?: number;
+  sunrise?: number;
+  sunset?: number;
 }
 
 export interface WeatherCondition {
@@ -37,30 +38,25 @@ export interface WeatherCondition {
 export interface HourlyForecast {
   dt: number;
   temp: number;
-  feels_like: number;
   pressure: number;
   humidity: number;
-  dew_point: number;
-  uvi: number;
-  clouds: number;
-  visibility: number;
   wind_speed: number;
   wind_deg: number;
-  wind_gust?: number;
   weather: WeatherCondition[];
-  pop: number;
+  // Fields NOT available in basic-1h, optional
+  feels_like?: number;
+  dew_point?: number;
+  uvi?: number;
+  clouds?: number;
+  visibility?: number;
+  wind_gust?: number;
+  pop?: number;
   rain?: { '1h': number };
   snow?: { '1h': number };
 }
 
 export interface DailyForecast {
   dt: number;
-  sunrise: number;
-  sunset: number;
-  moonrise: number;
-  moonset: number;
-  moon_phase: number;
-  summary: string;
   temp: {
     day: number;
     min: number;
@@ -69,24 +65,31 @@ export interface DailyForecast {
     eve: number;
     morn: number;
   };
-  feels_like: {
+  weather: WeatherCondition[];
+  // Fields NOT available in basic-1h, optional
+  sunrise?: number;
+  sunset?: number;
+  moonrise?: number;
+  moonset?: number;
+  moon_phase?: number;
+  summary?: string;
+  feels_like?: {
     day: number;
     night: number;
     eve: number;
     morn: number;
   };
-  pressure: number;
-  humidity: number;
-  dew_point: number;
-  wind_speed: number;
-  wind_deg: number;
+  pressure?: number;
+  humidity?: number;
+  dew_point?: number;
+  wind_speed?: number;
+  wind_deg?: number;
   wind_gust?: number;
-  weather: WeatherCondition[];
-  clouds: number;
-  pop: number;
+  clouds?: number;
+  pop?: number;
   rain?: number;
   snow?: number;
-  uvi: number;
+  uvi?: number;
 }
 
 export interface WeatherData {

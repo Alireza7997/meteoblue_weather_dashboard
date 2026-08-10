@@ -35,6 +35,15 @@
     color: var(--color-foreground);
     font-family: var(--font-geist-sans), system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    perspective: 1200px;
+    transform-style: preserve-3d;
+    overflow-x: hidden;
+  }
+
+  /* 3D depth for sections */
+  section {
+    transform-style: preserve-3d;
+    will-change: transform;
   }
 }
 
@@ -317,6 +326,11 @@
   50% { transform: translateY(-20px); opacity: 0.5; }
 }
 
+@keyframes windStreak {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(calc(100vw + 100%)); }
+}
+
 @keyframes lightningFlash {
   0%, 100% { opacity: 0; }
   5%, 15% { opacity: 0.04; }
@@ -516,6 +530,12 @@
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateZ(8px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
   }
 
   .panel {
@@ -525,14 +545,20 @@
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+    transform-style: preserve-3d;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+  }
+  .panel:hover {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(6,214,160,0.1), inset 0 1px 0 rgba(255,255,255,0.1);
+    transform: translateZ(5px);
   }
 
   .section-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--color-muted-foreground);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: white;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;

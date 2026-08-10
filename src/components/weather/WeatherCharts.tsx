@@ -56,7 +56,6 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
   const temperatureData = useMemo(() => hourly.map((h) => ({
     time: h.time,
     temp: h.temp,
-    feelsLike: h.feelsLike,
     hour: parseInt(h.time),
   })), [hourly]);
 
@@ -77,7 +76,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
   const humidityPressureData = useMemo(() => hourly.map((h) => ({
     time: h.time,
     humidity: h.humidity,
-    pressure: (h.pressure || 1013) - 1000,
+    pressure: ((h.pressure || 1013) - 1000).toFixed(2),
     hour: parseInt(h.time),
   })), [hourly]);
 
@@ -137,17 +136,6 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 7, strokeWidth: 2, stroke: CHART_COLORS.temp }}
-                strokeLinecap="round"
-              />
-              <Line
-                type="monotone"
-                dataKey="feelsLike"
-                name="Feels Like"
-                stroke={CHART_COLORS.feelsLike}
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={false}
-                activeDot={{ r: 7, strokeWidth: 2 }}
                 strokeLinecap="round"
               />
               <ReferenceLine
@@ -423,22 +411,24 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 dataKey="max"
                 name="High"
                 fill={CHART_COLORS.temp}
+                fillOpacity={0.6}
                 radius={[0, 4, 4, 0]}
                 barSize={14}
               >
                 {dailyTempData.map((_, index) => (
-                  <Cell key={`max-${index}`} fill={CHART_COLORS.temp} />
+                  <Cell key={`max-${index}`} fill={CHART_COLORS.temp} fillOpacity={0.6} />
                 ))}
               </Bar>
               <Bar
                 dataKey="min"
                 name="Low"
                 fill={CHART_COLORS.precipitation}
+                fillOpacity={0.4}
                 radius={[0, 4, 4, 0]}
                 barSize={14}
               >
                 {dailyTempData.map((_, index) => (
-                  <Cell key={`min-${index}`} fill={CHART_COLORS.precipitation} />
+                  <Cell key={`min-${index}`} fill={CHART_COLORS.precipitation} fillOpacity={0.4} />
                 ))}
               </Bar>
             </BarChart>

@@ -103,7 +103,7 @@ export function LocationSelectionMap({
       const newLocation: Location = {
         latitude: lat,
         longitude: lng,
-        name: 'Loading...',
+        name: 'Selected Location',
         country: '',
       };
 

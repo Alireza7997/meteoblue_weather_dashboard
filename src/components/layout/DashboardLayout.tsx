@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { WeatherVisualizationMap } from '@/components/maps/WeatherVisualizationMap';
 import { CurrentWeatherPanel } from '@/components/weather/CurrentWeatherPanel';
 import { HourlyForecast } from '@/components/weather/HourlyForecast';
@@ -54,6 +55,12 @@ export function DashboardLayout() {
     refetch,
   } = useWeather(selectedLocation);
 
+  // Determine if it's night based on current hour
+  const isNight = useMemo(() => {
+    const hour = new Date().getHours();
+    return hour < 6 || hour > 20;
+  }, []);
+
   const handleSearchSelect = (location: AppLocation) => {
     setSelectedLocation(location);
   };
@@ -70,8 +77,8 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex flex-col relative">
-      <WeatherBackground condition={currentWeather?.condition} />
+    <div className="min-h-screen bg-(--background) flex flex-col relative">
+      <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
 
       <div className="relative z-10 flex flex-col items-center pt-8 pb-4 px-4">
         <SearchBar
@@ -83,6 +90,9 @@ export function DashboardLayout() {
       </div>
 
       <main className="relative z-10 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pb-8">
+        {/* Gradient overlay to reduce brightness of lower sections */}
+        <div className="fixed bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 to-transparent pointer-events-none z-20" />
+
         <div className="max-w-7xl mx-auto space-y-8">
           {error && (
             <div className="glass-strong border border-rose-glow/30 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
@@ -98,7 +108,11 @@ export function DashboardLayout() {
           {selectedLocation && currentWeather && (
             <>
               <AnimatedSection animation="animate-section-blur" delay={100}>
-                <CurrentWeatherPanel current={currentWeather} isLoading={isLoading} />
+                <CurrentWeatherPanel
+                  locationName={selectedLocation ? `${selectedLocation.name === 'Loading...' || selectedLocation.name === 'Selected Location' ? 'Current Location' : selectedLocation.name}${selectedLocation.country && selectedLocation.country !== '' ? `, ${selectedLocation.country}` : ''}` : ''}
+                  current={currentWeather}
+                  isLoading={isLoading}
+                />
               </AnimatedSection>
 
               <AnimatedSection animation="animate-section-right" delay={150}>
@@ -130,18 +144,21 @@ export function DashboardLayout() {
               </AnimatedSection>
 
               <AnimatedSection animation="animate-section-left" delay={400}>
-                <section aria-labelledby="weather-map-title">
+                <section aria-labelledby="weather-map-title" className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <h2 id="weather-map-title" className="section-title">Weather Map</h2>
                     <div className="text-sm text-muted-foreground">
                       Layer: <span className="text-white font-medium capitalize">{useWeatherStore.getState().mapLayer}</span>
                     </div>
                   </div>
-                  <div className="aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden glass-vibrant">
+                  <div className="aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden glass-vibrant relative">
                     <WeatherVisualizationMap
                       selectedLocation={selectedLocation}
                       weatherData={hourlyForecast}
+                      className="pointer-events-none"
                     />
+                    {/* Gradient overlay to reduce interactivity feel */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                   </div>
                 </section>
               </AnimatedSection>

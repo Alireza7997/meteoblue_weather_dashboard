@@ -118,17 +118,11 @@ export function WeatherVisualizationMap({
       center: selectedLocation
         ? [selectedLocation.longitude, selectedLocation.latitude]
         : [-0.1278, 51.5074],
-      zoom: selectedLocation ? 7 : 3,
+      zoom: selectedLocation ? 6 : 3,
       pitch: 0,
       bearing: 0,
       antialias: true,
     });
-
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    map.addControl(
-      new maplibregl.FullscreenControl({ container: mapContainerRef.current }),
-      'top-right'
-    );
 
     mapRef.current = map;
 
@@ -206,8 +200,8 @@ export function WeatherVisualizationMap({
           layerConfig.min, layerConfig.colors[0].color,
           ...layerConfig.colors.slice(1).flatMap((stop) => [stop.value, stop.color]),
         ],
-        'circle-opacity': 0.7,
-        'circle-blur': 0.5,
+        'circle-opacity': 0.85,
+        'circle-blur': 0.3,
       },
     });
   };
@@ -284,7 +278,7 @@ export function WeatherVisualizationMap({
     if (mapRef.current && selectedLocation) {
       mapRef.current.flyTo({
         center: [selectedLocation.longitude, selectedLocation.latitude],
-        zoom: 7,
+        zoom: 6,
         essential: true,
       });
       addLocationMarker();
@@ -304,7 +298,7 @@ export function WeatherVisualizationMap({
       <div ref={mapContainerRef} className="w-full h-full" />
 
       <div className="absolute top-4 right-4 z-10">
-        <div className="glass-strong rounded-lg p-3 shadow-xl min-w-[160px] animate-fade-in">
+        <div className="bg-[#0d1525]/95 backdrop-blur-md rounded-lg p-3 shadow-xl min-w-[160px] animate-fade-in border border-white/10">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{layerConfig.icon}</span>
             <span className="font-semibold text-white">{layerConfig.label}</span>
@@ -327,7 +321,7 @@ export function WeatherVisualizationMap({
       </div>
 
       {hoverInfo && (
-        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-64 glass-strong rounded-lg p-3 shadow-xl animate-fade-in">
+        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-64 bg-[#0d1525]/95 backdrop-blur-md rounded-lg p-3 shadow-xl animate-fade-in border border-white/10">
           <div className="flex items-center gap-2 text-xs text-slate-300 mb-2">
             <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
             Hover Values

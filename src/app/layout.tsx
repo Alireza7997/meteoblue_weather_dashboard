@@ -1,10 +1,31 @@
 import type { Metadata, Viewport } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
 
 export const metadata: Metadata = {
   title: "Advanced Weather Analytics Dashboard",
-  description: "Professional meteorological dashboard with interactive maps, forecasts, and analytics",
-  keywords: ["weather", "analytics", "dashboard", "forecast", "meteorology", "maps"],
+  description:
+    "Professional meteorological dashboard with interactive maps, forecasts, and analytics",
+  keywords: [
+    "weather",
+    "analytics",
+    "dashboard",
+    "forecast",
+    "meteorology",
+    "maps",
+  ],
 };
 
 export const viewport: Viewport = {
@@ -13,17 +34,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <head>
-        <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
-        <link rel="preconnect" href="https://my.meteoblue.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-      </head>
-      <body className="min-h-full flex flex-col bg-[var(--color-background)] text-[var(--color-foreground)] font-[Geist]">
+      <body
+        className={`${geist.variable} ${geistMono.variable} min-h-full flex flex-col bg-background text-(--color-foreground)`}
+      >
         {children}
       </body>
     </html>

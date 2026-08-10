@@ -64,7 +64,7 @@ export function ForecastTimeline({ daily, hourly, timezoneOffset }: ForecastTime
           </div>
         </div>
 
-        <div className="pt-4 border-t border-white/5">
+        {/* <div className="pt-4 border-t border-white/5">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs text-slate-400 w-10">DAYS</span>
             <div className="flex-1 h-px bg-slate-800" />
@@ -90,7 +90,7 @@ export function ForecastTimeline({ daily, hourly, timezoneOffset }: ForecastTime
               </button>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ const METEOBLUE_LOCATION = `${METEOBLUE_BASE}/geocoding/v1/search`;
 
 // Security: Use environment variables
 const API_KEY = process.env.NEXT_PUBLIC_METEOBLUE_API_KEY;
-const SHARED_SECRET = process.env.METEOBLUE_SHARED_SECRET; // For signature mechanism
+const SHARED_SECRET = process.env.METEOBLUE_SHARED_SECRET;
 
 function getApiKey(): string {
   if (!API_KEY) {
@@ -23,7 +23,6 @@ function signRequest(query: string): string {
   }
 
   const crypto = require('crypto');
-  // Sign the full base URL + query
   const sig = crypto
     .createHmac('sha256', SHARED_SECRET)
     .update(query)
@@ -32,69 +31,70 @@ function signRequest(query: string): string {
   return `${query}&sig=${sig}`;
 }
 
-// Transform MeteoBlue weather code to OpenWeather-style condition
-function transformWeatherCode(code: number): { id: number; main: string; description: string; icon: string } {
-  // MeteoBlue weather codes (standard WMO)
+// Transform meteoblue pictocode to OpenWeather-style condition
+function transformPictocode(code: number): { id: number; main: string; description: string; icon: string } {
+  // meteoblue pictocodes: https://help.meteoblue.com/en/weather-variables/weather-forecast/pictocode
   const weatherMap: Record<number, { main: string; description: string; icon: string }> = {
-    0: { main: 'Clear', description: 'clear sky', icon: '01d' },
-    1: { main: 'Clear', description: 'mainly clear', icon: '01d' },
+    1: { main: 'Clear', description: 'clear sky', icon: '01d' },
     2: { main: 'Clouds', description: 'partly cloudy', icon: '02d' },
-    3: { main: 'Clouds', description: 'overcast', icon: '04d' },
-    45: { main: 'Fog', description: 'fog', icon: '50d' },
-    48: { main: 'Fog', description: 'depositing rime fog', icon: '50d' },
-    51: { main: 'Drizzle', description: 'light drizzle', icon: '09d' },
-    53: { main: 'Drizzle', description: 'moderate drizzle', icon: '09d' },
-    55: { main: 'Drizzle', description: 'dense drizzle', icon: '09d' },
-    61: { main: 'Rain', description: 'slight rain', icon: '10d' },
-    63: { main: 'Rain', description: 'moderate rain', icon: '10d' },
-    65: { main: 'Rain', description: 'heavy rain', icon: '10d' },
-    71: { main: 'Snow', description: 'slight snow', icon: '13d' },
-    73: { main: 'Snow', description: 'moderate snow', icon: '13d' },
-    75: { main: 'Snow', description: 'heavy snow', icon: '13d' },
-    80: { main: 'Rain', description: 'slight rain showers', icon: '09d' },
-    81: { main: 'Rain', description: 'moderate rain showers', icon: '09d' },
-    82: { main: 'Rain', description: 'violent rain showers', icon: '09d' },
-    85: { main: 'Snow', description: 'slight snow showers', icon: '13d' },
-    86: { main: 'Snow', description: 'heavy snow showers', icon: '13d' },
-    95: { main: 'Thunderstorm', description: 'thunderstorm', icon: '11d' },
-    96: { main: 'Thunderstorm', description: 'thunderstorm with hail', icon: '11d' },
-    99: { main: 'Thunderstorm', description: 'thunderstorm with heavy hail', icon: '11d' },
+    3: { main: 'Clouds', description: 'cloudy', icon: '03d' },
+    4: { main: 'Clouds', description: 'overcast', icon: '04d' },
+    5: { main: 'Fog', description: 'fog', icon: '50d' },
+    6: { main: 'Drizzle', description: 'light drizzle', icon: '09d' },
+    7: { main: 'Rain', description: 'light rain', icon: '10d' },
+    8: { main: 'Rain', description: 'moderate rain', icon: '10d' },
+    9: { main: 'Rain', description: 'heavy rain', icon: '10d' },
+    10: { main: 'Clear', description: 'clear sky', icon: '01d' },
+    11: { main: 'Clouds', description: 'cloudy', icon: '04d' },
+    12: { main: 'Rain', description: 'rain', icon: '10d' },
+    13: { main: 'Snow', description: 'light snow', icon: '13d' },
+    14: { main: 'Snow', description: 'moderate snow', icon: '13d' },
+    15: { main: 'Snow', description: 'heavy snow', icon: '13d' },
+    16: { main: 'Thunderstorm', description: 'thunderstorm', icon: '11d' },
+    17: { main: 'Thunderstorm', description: 'thunderstorm with hail', icon: '11d' },
+    18: { main: 'Rain', description: 'light rain showers', icon: '09d' },
+    19: { main: 'Rain', description: 'moderate rain showers', icon: '09d' },
+    20: { main: 'Snow', description: 'light snow showers', icon: '13d' },
+    21: { main: 'Snow', description: 'moderate snow showers', icon: '13d' },
+    22: { main: 'Drizzle', description: 'light drizzle', icon: '09d' },
+    23: { main: 'Rain', description: 'light rain', icon: '10d' },
+    24: { main: 'Rain', description: 'moderate rain', icon: '10d' },
+    25: { main: 'Snow', description: 'light snow', icon: '13d' },
+    26: { main: 'Snow', description: 'moderate snow', icon: '13d' },
+    27: { main: 'Fog', description: 'fog', icon: '50d' },
+    28: { main: 'Clouds', description: 'overcast', icon: '04d' },
+    29: { main: 'Thunderstorm', description: 'thunderstorm', icon: '11d' },
   };
 
-  const mapped = weatherMap[code] || { main: 'Unknown', description: 'unknown', icon: '01d' };
+  const mapped = weatherMap[code] || { main: 'Clear', description: 'clear sky', icon: '01d' };
   return { id: code, ...mapped };
 }
 
-// Helper: Convert dew point to relative humidity (simplified)
-function humidityToPercentage(dewPoint: number): number {
-  return 50 + Math.round((dewPoint / 20) * 10);
-}
-
-// Transform MeteoBlue response to our WeatherData format
-function transformMeteoBlueResponse(any: any, lat: number, lon: number): WeatherData {
+// Transform meteoblue response to our WeatherData format
+// Response structure: { metadata, units, data_1h: { time[], temperature[], windspeed[], ... } }
+function transformMeteoBlueResponse(data: any, lat: number, lon: number): WeatherData {
   const now = Math.floor(Date.now() / 1000);
   const then = new Date();
-  const currentHourIndex = then.getUTCHours();
 
-  // Basic-1h package returns parallel array structures (per doc.md)
-  // Structure: metadata + parallel arrays for each variable
-  // e.g., temperature {time[], val[]}, weathercode {time[], val[]}, etc.
-  const temperature = any.temperature?.val || [];
-  const precipitation = any.precipitationamount?.val || [];
-  const windspeed = any.windspeed?.val || [];
-  const winddirection = any.winddirection?.val || [];
-  const cloudcover = any.cloudcover?.val || [];
-  const uv_index = any.uv_index?.val || [];
-  const dewpoint = any.dewpoint?.val || [];
-  const weathercode = any.weathercode?.val || [];
-  const relativehumidity = any.relativehumidity?.val || [];
+  // Data is in data_1h object with direct arrays (not .val)
+  const data1h = data.data_1h || {};
+  const temperature = data1h.temperature || [];
+  const precipitation = data1h.precipitation || [];
+  const precipitationProb = data1h.precipitation_probability || [];
+  const windspeed = data1h.windspeed || [];
+  const winddirection = data1h.winddirection || [];
+  const sealevelpressure = data1h.sealevelpressure || [];
+  const relativehumidity = data1h.relativehumidity || [];
+  const uvindex = data1h.uvindex || [];
+  const felttemperature = data1h.felttemperature || [];
+  const pictocode = data1h.pictocode || [];
+  const isdaylight = data1h.isdaylight || [];
 
-  const timeStrings = any.temperature?.time || [];
+  const timeStrings = data1h.time || [];
+  const timezone = data.metadata?.timezone_abbrevation || 'UTC';
+  const utcOffset = data.metadata?.utc_timeoffset || 0;
+  const timezoneOffset = -utcOffset * 60; // Convert hours to minutes, negate for JS
 
-  const timezone = any.timezone || 'UTC';
-  const timezoneOffset = then.getTimezoneOffset();
-
-  // Convert time strings to timestamps
   const getTimestamp = (timeStr: string): number => {
     if (!timeStr) return now;
     const [dateStr, hourStr] = timeStr.split(' ');
@@ -106,135 +106,86 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
 
   const timestamps = timeStrings.map(getTimestamp);
 
-  // Find current weather (nearest to current time)
-  const currentTime = now;
-  let currentIdx = timestamps.findIndex((t: number) => Math.abs(t - currentTime) < (3600 / 2)); // within 30 mins
-  if (currentIdx < 0) currentIdx = timestamps.findIndex((t: number) => t > currentTime) || 0;
-
-  const currentHourDataIdx = currentIdx;
-  const currentHourIdx = currentHourIndex + Math.floor((currentIdx - currentHourDataIdx) / 3); // approximate
-
-  // Get current weather
-  const getVal = (idx: number): number => temperature[idx] || 0;
-  const getWeatherCode = (idx: number): number => weathercode?.[idx] || 0;
+  // Find current hour index
+  let currentIdx = timestamps.findIndex((t: number) => Math.abs(t - now) < 1800);
+  if (currentIdx < 0) currentIdx = timestamps.findIndex((t: number) => t > now) || 0;
 
   const current: CurrentWeather = {
     dt: timestamps[currentIdx] || now,
-    sunrise: 0,
-    sunset: 0,
-    temp: getVal(currentIdx),
-    feels_like: 0, // MeteoBlue basic doesn't provide
-    pressure: 1013,
-    humidity: humidityToPercentage(dewpoint[currentIdx] || 0),
-    dew_point: dewpoint[currentIdx] || 0,
-    uvi: uv_index[currentIdx] || 0,
-    clouds: cloudcover[currentIdx] || 0,
-    visibility: 10000,
-    wind_speed: windspeed[currentIdx] ? windspeed[currentIdx] / 3.6 : 0,
+    temp: temperature[currentIdx] || 0,
+    feels_like: felttemperature[currentIdx] || 0,
+    pressure: sealevelpressure[currentIdx] || 1013,
+    humidity: relativehumidity[currentIdx] || 50,
+    uvi: uvindex[currentIdx] || 0,
+    clouds: 0, // Not provided in basic-1h
+    wind_speed: windspeed[currentIdx] || 0, // Already in m/s
     wind_deg: winddirection[currentIdx] || 0,
-    wind_gust: 0,
-    weather: [transformWeatherCode(getWeatherCode(currentIdx))],
+    weather: [transformPictocode(pictocode[currentIdx] || 10)],
   };
 
-  // Transform hourly forecast (next 24 hours, every 3 hours)
+  // Hourly forecast - next 24 hours (every 3 hours)
   const hourly: HourlyForecast[] = [];
-  const baseIdx = currentIdx + 3; // Start at next 3-hour interval
+  const baseIdx = currentIdx + 1;
 
-  for (let i = 0; i < 8; i++) {
-    const idx = baseIdx + (i * 3);
-    if (timestamps[idx]) {
-      const temp = getVal(idx);
-      const wind = windspeed[idx] ? windspeed[idx] / 3.6 : 0;
-      const code = getWeatherCode(idx);
-      const precipProb = precipitation[idx] > 0 ? Math.min(100, Math.round((precipitation[idx] / 5) * 100)) : 0;
+  for (let i = 0; i < 24; i++) {
+    const idx = baseIdx + i;
+    if (idx < timestamps.length) {
       const precipAmount = precipitation[idx] || 0;
-
       hourly.push({
         dt: timestamps[idx],
-        temp: temp,
-        feels_like: 0,
-        pressure: 1013,
-        humidity: humidityToPercentage(dewpoint[idx] || 0),
-        dew_point: dewpoint[idx] || 0,
-        uvi: uv_index[idx] || 0,
-        clouds: cloudcover[idx] || 0,
-        visibility: 10000,
-        wind_speed: wind,
+        temp: temperature[idx] || 0,
+        feels_like: felttemperature[idx] || 0,
+        pressure: sealevelpressure[idx] || 1013,
+        humidity: relativehumidity[idx] || 50,
+        wind_speed: windspeed[idx] || 0,
         wind_deg: winddirection[idx] || 0,
-        wind_gust: 0,
-        weather: [transformWeatherCode(code)],
-        pop: precipProb / 100,
-        rain: precipAmount > 0.1 ? { '1h': Math.round(precipAmount) * 10 } : undefined,
+        weather: [transformPictocode(pictocode[idx] || 10)],
+        pop: (precipitationProb[idx] || 0) / 100, // Convert 0-100 to 0-1
+        rain: precipAmount > 0 ? { '1h': precipAmount } : undefined,
       });
     }
   }
 
-  // Transform daily forecast (next 7 days)
+  // Daily forecast - aggregate by day
   const daily: DailyForecast[] = [];
-  let dayIndex = 0;
-  const targetDays = 7;
+  const daysMap = new Map<number, number[]>();
 
-  while (daily.length < targetDays && dayIndex + (2 * 24) < timestamps.length) {
-    // Get representative hour for this day
-    const baseDateIdx = currentIdx + dayIndex * (2 * 24);
-    const baseDate = new Date(timestamps[baseDateIdx] * 1000);
-
-    // Find hour closest to 14:00 UTC for day average
-    const dayStartIdx = Math.min(baseDateIdx + 24, timestamps.length - 1);
-    const dayEndIdx = Math.min(baseDateIdx + 2 * 24 - 1, timestamps.length - 1);
-
-    const temps = temperature.slice(dayStartIdx, dayEndIdx + 1);
-    if (temps.length === 0) {
-      dayIndex++;
-      continue;
+  timestamps.forEach((ts: number, idx: number) => {
+    const dayStart = Math.floor(ts / 86400) * 86400;
+    if (!daysMap.has(dayStart)) {
+      daysMap.set(dayStart, []);
     }
+    daysMap.get(dayStart)!.push(idx);
+  });
 
-    const minTemp = Math.min(...temps);
-    const maxTemp = Math.max(...temps);
-    const avgTemp = temps.reduce((a: number, b: number) => a + b, 0) / temps.length;
+  let dayCount = 0;
+  for (const [dayStart, indices] of daysMap) {
+    if (dayCount >= 7) break;
 
-    const dayPrecip = precipitation.slice(dayStartIdx, dayEndIdx + 1).reduce((a: number, b: number) => a + b, 0);
-    const precipProb = dayPrecip > 0 ? Math.min(100, Math.round((dayPrecip / 5) * 100)) : 0;
-    const precipAmount = Math.round(dayPrecip);
+    const dayTemps = indices.map(i => temperature[i]).filter(t => t !== undefined);
+    const dayPrecip = indices.reduce((sum, i) => sum + (precipitation[i] || 0), 0);
+    const dayPrecipProb = Math.max(...indices.map(i => precipitationProb[i] || 0));
 
-    const dayCode = getWeatherCode(baseDateIdx);
+    if (dayTemps.length === 0) continue;
 
     daily.push({
-      dt: timestamps[baseDateIdx] || Math.floor(baseDate.getTime() / 1000),
-      sunrise: 0,
-      sunset: 0,
-      moonrise: 0,
-      moonset: 0,
-      moon_phase: 0,
-      summary: '',
+      dt: dayStart,
       temp: {
-        day: avgTemp,
-        min: minTemp,
-        max: maxTemp,
-        night: minTemp,
-        eve: avgTemp,
-        morn: avgTemp,
+        day: dayTemps.reduce((a, b) => a + b, 0) / dayTemps.length,
+        min: Math.min(...dayTemps),
+        max: Math.max(...dayTemps),
+        night: dayTemps[Math.floor(dayTemps.length / 2)] || dayTemps[0],
+        eve: dayTemps[Math.floor(dayTemps.length * 0.7)] || dayTemps[dayTemps.length - 1],
+        morn: dayTemps[Math.floor(dayTemps.length * 0.2)] || dayTemps[0],
       },
-      feels_like: {
-        day: avgTemp,
-        night: minTemp,
-        eve: avgTemp,
-        morn: avgTemp,
-      },
-      pressure: 1013,
-      humidity: humidityToPercentage(dewpoint[baseDateIdx] || 0),
-      dew_point: dewpoint[baseDateIdx] || 0,
-      wind_speed: windspeed[baseDateIdx] ? windspeed[baseDateIdx] / 3.6 : 0,
-      wind_deg: winddirection[baseDateIdx] || 0,
-      wind_gust: 0,
-      weather: [transformWeatherCode(dayCode)],
-      clouds: cloudcover[baseDateIdx] || 0,
-      pop: precipProb / 100,
-      rain: precipAmount > 0.1 ? precipAmount : undefined,
-      uvi: uv_index[baseDateIdx] || 0,
+      humidity: Math.round(indices.reduce((sum, i) => sum + relativehumidity[i], 0) / indices.length),
+      wind_speed: Math.max(...indices.map(i => windspeed[i] || 0)),
+      pop: dayPrecipProb / 100,
+      rain: dayPrecip > 0 ? dayPrecip : undefined,
+      weather: [transformPictocode(pictocode[indices[0]] || 10)],
     });
 
-    dayIndex++;
+    dayCount++;
   }
 
   return {
@@ -250,7 +201,6 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
 
 export async function fetchWeatherData(lat: number, lon: number): Promise<WeatherData | null> {
   try {
-    // Basic-1h package: 1-hour forecast for next 7 days
     const query = `/packages/basic-1h?lat=${lat}&lon=${lon}&apikey=${getApiKey()}&expire=1924948800`;
     const signedQuery = signRequest(query);
     const url = `${METEOBLUE_BASE}${signedQuery}`;
@@ -275,7 +225,6 @@ export async function fetchWeatherData(lat: number, lon: number): Promise<Weathe
   }
 }
 
-// Transform MeteoBlue geocoding response to our format
 function transformGeocodingResult(result: any): GeocodingResult {
   return {
     name: result.name || result.city || 'Unknown',
@@ -298,11 +247,7 @@ export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> 
     }
 
     const data = await response.json();
-
-    // MeteoBlue returns results in a results array
     const results = data.results || data || [];
-
-    // Handle both array and single result formats
     const resultsArray = Array.isArray(results) ? results : [results];
 
     return resultsArray.map(transformGeocodingResult);
@@ -314,7 +259,6 @@ export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> 
 
 export async function fetchReverseGeocoding(lat: number, lon: number): Promise<GeocodingResult | null> {
   try {
-    // meteoblue doesn't provide direct reverse geocoding
     const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
 
     const response = await fetch(url);
@@ -339,9 +283,6 @@ export async function fetchReverseGeocoding(lat: number, lon: number): Promise<G
 
 export async function fetchHistoricalData(location: AppLocation): Promise<HistoricalData | null> {
   try {
-    // NOTE: History API requires Enterprise tier (doc.md line 170)
-    // Free tier only supports Forecast and Images APIs
-    // Returning mock data for free tier users
     const mockData = getMockHistoricalData(location);
     return {
       location,

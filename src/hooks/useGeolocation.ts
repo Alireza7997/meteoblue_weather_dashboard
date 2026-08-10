@@ -21,8 +21,14 @@ export function useGeocoding(): UseGeocodingReturn {
     setError(null);
 
     try {
-      const results = await fetchGeocoding(query);
-      return results.map((result) => ({
+      const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}`);
+      const results = await response.json();
+
+      if (!response.ok) {
+        throw new Error('Geocoding failed');
+      }
+
+      return results.map((result: any) => ({
         latitude: result.lat,
         longitude: result.lon,
         name: result.name,
