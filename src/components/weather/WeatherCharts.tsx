@@ -28,29 +28,30 @@ interface WeatherChartsProps {
 }
 
 const CHART_COLORS = {
-  temp: '#22d3ee',
-  feelsLike: '#f97316',
+  temp: '#06d6a0',
+  feelsLike: '#fbbf24',
   precipitation: '#38bdf8',
   pop: '#0ea5e9',
-  wind: '#22c55e',
-  gust: '#84cc16',
+  wind: '#a78bfa',
+  gust: '#c084fc',
   humidity: '#fbbf24',
-  pressure: '#a855f7',
-  grid: '#1e293b',
-  text: '#94a3b8',
-  axis: '#334155',
+  pressure: '#fb7185',
+  grid: 'rgba(255,255,255,0.03)',
+  text: '#7e8da6',
+  axis: 'rgba(255,255,255,0.06)',
 };
 
 const tooltipStyle = {
-  backgroundColor: 'rgba(17, 24, 39, 0.95)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  borderRadius: '12px',
-  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
-  backdropFilter: 'blur(12px)',
+  backgroundColor: 'rgba(13, 21, 37, 0.95)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: '16px',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(6,214,160,0.1)',
+  backdropFilter: 'blur(20px)',
+  padding: '12px 16px',
 };
 
 export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsProps) {
-  const { selectedHour, selectedDate } = useWeatherStore();
+  const { selectedHour } = useWeatherStore();
 
   const temperatureData = useMemo(() => hourly.map((h) => ({
     time: h.time,
@@ -97,6 +98,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               data={temperatureData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
+              <defs>
+                <linearGradient id="tempGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_COLORS.temp} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={CHART_COLORS.temp} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
               <XAxis
                 dataKey="time"
@@ -129,7 +136,8 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 stroke={CHART_COLORS.temp}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 6, strokeWidth: 2 }}
+                activeDot={{ r: 7, strokeWidth: 2, stroke: CHART_COLORS.temp }}
+                strokeLinecap="round"
               />
               <Line
                 type="monotone"
@@ -139,11 +147,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
-                activeDot={{ r: 6, strokeWidth: 2 }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                strokeLinecap="round"
               />
               <ReferenceLine
                 x={selectedHour.toString()}
-                stroke="rgba(34, 211, 238, 0.3)"
+                stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
@@ -157,6 +166,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               data={precipitationData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
+              <defs>
+                <linearGradient id="precipGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_COLORS.precipitation} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={CHART_COLORS.precipitation} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
               <XAxis
                 dataKey="time"
@@ -210,14 +225,13 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 name="Amount (mm)"
                 stroke={CHART_COLORS.precipitation}
                 strokeWidth={2}
-                fill={CHART_COLORS.precipitation}
-                fillOpacity={0.1}
+                fill="url(#precipGradient)"
                 connectNulls={true}
               />
               <ReferenceLine
                 yAxisId="left"
                 x={selectedHour.toString()}
-                stroke="rgba(34, 211, 238, 0.3)"
+                stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
@@ -231,6 +245,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               data={windData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
+              <defs>
+                <linearGradient id="windGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_COLORS.wind} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={CHART_COLORS.wind} stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} vertical={false} />
               <XAxis
                 dataKey="time"
@@ -262,8 +282,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 name="Speed"
                 stroke={CHART_COLORS.wind}
                 strokeWidth={2}
-                fill={CHART_COLORS.wind}
-                fillOpacity={0.15}
+                fill="url(#windGradient)"
                 connectNulls={true}
               />
               <Line
@@ -274,11 +293,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2 }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                strokeLinecap="round"
               />
               <ReferenceLine
                 x={selectedHour.toString()}
-                stroke="rgba(34, 211, 238, 0.3)"
+                stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
@@ -339,7 +359,8 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 stroke={CHART_COLORS.humidity}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2 }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                strokeLinecap="round"
               />
               <Line
                 yAxisId="right"
@@ -350,12 +371,13 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2 }}
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                strokeLinecap="round"
               />
               <ReferenceLine
                 yAxisId="left"
                 x={selectedHour.toString()}
-                stroke="rgba(34, 211, 238, 0.3)"
+                stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
               />
@@ -436,12 +458,14 @@ interface ChartCardProps {
 
 function ChartCard({ title, subtitle, icon, children }: ChartCardProps) {
   return (
-    <div className="glass rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">{icon}</span>
+    <div className="glass-vibrant rounded-2xl p-6 glow-hover transition-all duration-300">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+          <span className="text-xl">{icon}</span>
+        </div>
         <div>
           <div className="font-semibold text-white">{title}</div>
-          <div className="text-xs text-slate-400">{subtitle}</div>
+          <div className="text-xs text-muted-foreground">{subtitle}</div>
         </div>
       </div>
       <div className="h-full">{children}</div>

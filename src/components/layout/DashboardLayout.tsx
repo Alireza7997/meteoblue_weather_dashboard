@@ -1,6 +1,5 @@
 'use client';
 
-import { LocationSelectionMap } from '@/components/maps/LocationSelectionMap';
 import { WeatherVisualizationMap } from '@/components/maps/WeatherVisualizationMap';
 import { CurrentWeatherPanel } from '@/components/weather/CurrentWeatherPanel';
 import { HourlyForecast } from '@/components/weather/HourlyForecast';
@@ -8,16 +7,40 @@ import { DailyForecast } from '@/components/weather/DailyForecast';
 import { WeatherCharts } from '@/components/weather/WeatherCharts';
 import { WeatherAlerts } from '@/components/weather/WeatherAlerts';
 import { ForecastTimeline } from '@/components/weather/ForecastTimeline';
-import { LocationHeader } from '@/components/layout/Header';
+import { WeatherBackground } from '@/components/effects/WeatherBackground';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { MapModal } from '@/components/ui/MapModal';
 import { useWeather } from '@/hooks/useWeather';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useSectionInView } from '@/hooks/useSectionInView';
 import { useWeatherStore } from '@/lib/store';
 import type { AppLocation } from '@/lib/types';
-import type { HourlyForecastItem, DailyForecastItem } from '@/lib/utils';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 
+function AnimatedSection({
+  children,
+  animation = 'animate-section-left',
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  animation?: string;
+  delay?: number;
+}) {
+  const { ref, isVisible } = useSectionInView();
+
+  return (
+    <div
+      ref={ref}
+      className={isVisible ? animation : 'opacity-0'}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export function DashboardLayout() {
-  const { selectedLocation, setSelectedLocation, setError } = useWeatherStore();
+  const { selectedLocation, setSelectedLocation, mapModalOpen, setMapModalOpen } = useWeatherStore();
   const { getCurrentLocation, isLoading: isGeoLoading } = useGeolocation();
 
   const {
@@ -47,20 +70,24 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex flex-col">
-      <LocationHeader
-        location={selectedLocation}
-        onSearchSelect={handleSearchSelect}
-        onUseCurrentLocation={handleUseCurrentLocation}
-        isLoading={isGeoLoading}
-      />
+    <div className="min-h-screen bg-[var(--background)] flex flex-col relative">
+      <WeatherBackground condition={currentWeather?.condition} />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+      <div className="relative z-10 flex flex-col items-center pt-8 pb-4 px-4">
+        <SearchBar
+          onSelect={handleSearchSelect}
+          onUseCurrentLocation={handleUseCurrentLocation}
+          onOpenMap={() => setMapModalOpen(true)}
+          isLoading={isGeoLoading}
+        />
+      </div>
+
+      <main className="relative z-10 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pb-8">
+        <div className="max-w-7xl mx-auto space-y-8">
           {error && (
-            <div className="glass-strong border border-red-500/30 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
-              <AlertTriangle className="text-red-400 w-5 h-5 flex-shrink-0" />
-              <p className="text-sm text-red-300 flex-1">{error}</p>
+            <div className="glass-strong border border-rose-glow/30 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
+              <AlertTriangle className="text-rose-glow w-5 h-5 flex-shrink-0" />
+              <p className="text-sm text-rose-300 flex-1">{error}</p>
               <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1">
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Retry
@@ -68,98 +95,88 @@ export function DashboardLayout() {
             </div>
           )}
 
-          <section aria-labelledby="location-selection-title" className="animate-slide-up">
-            <div className="flex items-center justify-between mb-4">
-              <h2 id="location-selection-title" className="section-title">Select Location</h2>
-              {selectedLocation && (
-                <div className="glass rounded-lg px-3 py-1.5 text-sm">
-                  <span className="text-slate-400">Selected:</span>{' '}
-                  <span className="text-white font-medium">
-                    {selectedLocation.name}{selectedLocation.country && `, ${selectedLocation.country}`}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="aspect-video md:aspect-[16/9] rounded-xl overflow-hidden glass">
-              <LocationSelectionMap
-                selectedLocation={selectedLocation}
-                onLocationSelect={handleSearchSelect}
-              />
-            </div>
-          </section>
-
           {selectedLocation && currentWeather && (
             <>
-              <section aria-labelledby="current-weather-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-blur" delay={100}>
                 <CurrentWeatherPanel current={currentWeather} isLoading={isLoading} />
-              </section>
+              </AnimatedSection>
 
-              <section aria-labelledby="hourly-forecast-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-right" delay={150}>
                 <HourlyForecast hourly={hourlyForecast} timezoneOffset={weatherData?.timezone_offset || 0} />
-              </section>
+              </AnimatedSection>
 
-              <section aria-labelledby="daily-forecast-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-left" delay={200}>
                 <DailyForecast daily={dailyForecast} timezoneOffset={weatherData?.timezone_offset || 0} />
-              </section>
+              </AnimatedSection>
 
-              <section aria-labelledby="weather-map-title" className="animate-slide-up">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 id="weather-map-title" className="section-title">Weather Map</h2>
-                  <div className="text-sm text-slate-400">
-                    Layer: <span className="text-white font-medium capitalize">{useWeatherStore.getState().mapLayer}</span>
-                  </div>
-                </div>
-                <div className="aspect-video md:aspect-[16/9] rounded-xl overflow-hidden glass">
-                  <WeatherVisualizationMap
-                    selectedLocation={selectedLocation}
-                    weatherData={hourlyForecast}
-                  />
-                </div>
-              </section>
-
-              <section aria-labelledby="alerts-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-scale" delay={250}>
                 <WeatherAlerts insights={insights} />
-              </section>
+              </AnimatedSection>
 
-              <section aria-labelledby="analytics-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-blur" delay={300}>
                 <WeatherCharts
                   hourly={hourlyForecast}
                   daily={dailyForecast}
                   timezoneOffset={weatherData?.timezone_offset || 0}
                 />
-              </section>
+              </AnimatedSection>
 
-              <section aria-labelledby="timeline-title" className="animate-slide-up">
+              <AnimatedSection animation="animate-section-right" delay={350}>
                 <ForecastTimeline
                   daily={dailyForecast}
                   hourly={hourlyForecast.map(h => ({ time: h.time, timestamp: h.timestamp }))}
                   timezoneOffset={weatherData?.timezone_offset || 0}
                 />
-              </section>
+              </AnimatedSection>
+
+              <AnimatedSection animation="animate-section-left" delay={400}>
+                <section aria-labelledby="weather-map-title">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 id="weather-map-title" className="section-title">Weather Map</h2>
+                    <div className="text-sm text-muted-foreground">
+                      Layer: <span className="text-white font-medium capitalize">{useWeatherStore.getState().mapLayer}</span>
+                    </div>
+                  </div>
+                  <div className="aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden glass-vibrant">
+                    <WeatherVisualizationMap
+                      selectedLocation={selectedLocation}
+                      weatherData={hourlyForecast}
+                    />
+                  </div>
+                </section>
+              </AnimatedSection>
             </>
           )}
 
-          {!selectedLocation && (
-            <div className="glass rounded-xl p-12 text-center animate-fade-in">
+          {!selectedLocation && !isLoading && (
+            <div className="glass-vibrant rounded-2xl p-12 text-center animate-fade-in mt-12">
               <div className="text-6xl mb-4">🌍</div>
               <h3 className="text-xl font-semibold text-white mb-2">Select a Location</h3>
-              <p className="text-slate-400 max-w-md mx-auto">
-                Click on the map above, search for a city, or use your current location to begin exploring weather analytics.
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Search for a city, click the map button, or use your current location to begin exploring weather analytics.
               </p>
             </div>
           )}
 
           {selectedLocation && isLoading && (
             <div className="fixed inset-0 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm z-50">
-              <div className="glass-strong rounded-xl p-8 text-center shadow-2xl">
-                <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mx-auto mb-4" />
+              <div className="glass-vibrant rounded-2xl p-8 text-center shadow-2xl animate-bounce-in">
+                <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
                 <p className="text-white">Loading weather data...</p>
-                <p className="text-sm text-slate-400 mt-2">{selectedLocation.name}</p>
+                <p className="text-sm text-muted-foreground mt-2">{selectedLocation.name}</p>
               </div>
             </div>
           )}
         </div>
       </main>
+
+      {mapModalOpen && (
+        <MapModal
+          selectedLocation={selectedLocation}
+          onLocationSelect={handleSearchSelect}
+          onClose={() => setMapModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

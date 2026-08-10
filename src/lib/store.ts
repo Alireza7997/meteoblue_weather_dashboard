@@ -10,6 +10,8 @@ interface WeatherStore extends WeatherState {
   setMapLayer: (layer: WeatherMapLayer) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  mapModalOpen: boolean;
+  setMapModalOpen: (open: boolean) => void;
   reset: () => void;
 }
 
@@ -26,12 +28,14 @@ export const useWeatherStore = create<WeatherStore>()(
   persist(
     (set) => ({
       ...initialState,
+      mapModalOpen: false,
       setSelectedLocation: (location) => set({ selectedLocation: location }),
       setSelectedDate: (date) => set({ selectedDate: date }),
       setSelectedHour: (hour) => set({ selectedHour: hour }),
       setMapLayer: (layer) => set({ mapLayer: layer }),
       setLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
+      setMapModalOpen: (open) => set({ mapModalOpen: open }),
       reset: () => set(initialState),
     }),
     {
