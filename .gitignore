@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lint cache
+.eslintcache
+
+# editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ai coding tools (local state, not project config)
+.claude/
+.kilo/
