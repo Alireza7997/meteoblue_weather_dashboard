@@ -59,8 +59,8 @@ The weather map renders 6 switchable layers, each with its own color scale and l
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/Alireza7997/advanced_weather_analytics.git
-   cd advanced_weather_analytics
+   git clone https://github.com/Alireza7997/weather_analytics_dashboard.git
+   cd weather_analytics_dashboard
    ```
 
 2. Install dependencies:
