@@ -385,7 +385,7 @@
 }
 
 .weather-tooltip {
-  background-color: rgb(13 21 37 / 0.95);
+  background-color: #233859;
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 1rem;

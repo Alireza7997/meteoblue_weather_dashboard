@@ -111,6 +111,19 @@ export interface GeocodingResult {
   state?: string;
 }
 
+export interface BigDataCloudReverseGeocodingResponse {
+  latitude: number;
+  longitude: number;
+  countryName: string;
+  countryCode: string;
+  principalSubdivision: string;
+  principalSubdivisionCode: string;
+  city: string;
+  locality: string;
+  postcode: string;
+  plusCode: string;
+}
+
 export type WeatherMapLayer =
   | 'temperature'
   | 'precipitation'

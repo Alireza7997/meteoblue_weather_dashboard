@@ -125,10 +125,10 @@ export const MAP_STYLE = {
 import type { AppLocation } from './types';
 
 export const DEFAULT_LOCATION: AppLocation = {
-  latitude: 51.5074,
-  longitude: -0.1278,
-  name: 'London',
-  country: 'GB',
+  latitude: 35.7219,
+  longitude: 51.3347,
+  name: 'Tehran',
+  country: 'Iran',
 };
 
 export const WEATHER_ICONS: Record<string, string> = {

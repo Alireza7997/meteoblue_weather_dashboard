@@ -37,7 +37,7 @@ const CHART_COLORS = {
   humidity: '#fbbf24',
   pressure: '#fb7185',
   grid: 'rgba(255,255,255,0.03)',
-  text: '#7e8da6',
+  text: '#a8b8c8',
   axis: 'rgba(255,255,255,0.06)',
 };
 

@@ -1,4 +1,4 @@
-import type { WeatherData, GeocodingResult, AppLocation, HistoricalData, CurrentWeather, HourlyForecast, DailyForecast } from './types';
+import type { WeatherData, GeocodingResult, AppLocation, HistoricalData, CurrentWeather, HourlyForecast, DailyForecast, BigDataCloudReverseGeocodingResponse } from './types';
 import { getMockHistoricalData } from './constants';
 
 // meteoblue API Configuration
@@ -72,12 +72,12 @@ function transformPictocode(code: number): { id: number; main: string; descripti
 
 // Transform meteoblue response to our WeatherData format
 // Response structure: { metadata, units, data_1h: { time[], temperature[], windspeed[], ... } }
-function transformMeteoBlueResponse(data: any, lat: number, lon: number): WeatherData {
+function transformMeteoBlueResponse(any: any, lat: number, lon: number): WeatherData {
   const now = Math.floor(Date.now() / 1000);
   const then = new Date();
 
   // Data is in data_1h object with direct arrays (not .val)
-  const data1h = data.data_1h || {};
+  const data1h = any?.data_1h || {};
   const temperature = data1h.temperature || [];
   const precipitation = data1h.precipitation || [];
   const precipitationProb = data1h.precipitation_probability || [];
@@ -91,8 +91,8 @@ function transformMeteoBlueResponse(data: any, lat: number, lon: number): Weathe
   const isdaylight = data1h.isdaylight || [];
 
   const timeStrings = data1h.time || [];
-  const timezone = data.metadata?.timezone_abbrevation || 'UTC';
-  const utcOffset = data.metadata?.utc_timeoffset || 0;
+  const timezone = any?.metadata?.timezone_abbrevation || 'UTC';
+  const utcOffset = any?.metadata?.utc_timeoffset || 0;
   const timezoneOffset = -utcOffset * 60; // Convert hours to minutes, negate for JS
 
   const getTimestamp = (timeStr: string): number => {
@@ -257,26 +257,38 @@ export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> 
   }
 }
 
-export async function fetchReverseGeocoding(lat: number, lon: number): Promise<GeocodingResult | null> {
+export async function fetchReverseGeocoding(
+  lat: number,
+  lon: number
+): Promise<GeocodingResult | null> {
+
   try {
-    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+    const url =
+      `https://api.bigdatacloud.net/data/reverse-geocode-client` +
+      `?latitude=${lat}` +
+      `&longitude=${lon}` +
+      `&localityLanguage=en`;
 
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Reverse geocoding API error: ${response.status}`);
+      throw new Error(
+        `Reverse geocoding API error: ${response.status} ${response.statusText}`
+      );
     }
 
-    const data = await response.json();
+    const data =
+      (await response.json()) as BigDataCloudReverseGeocodingResponse;
+
     return {
-      name: data.city || data.locality || 'Unknown location',
-      lat: lat,
-      lon: lon,
-      country: data.countryName || '',
-      state: data.principalSubdivision || ''
-    } as GeocodingResult;
+      name: data.city || data.locality || "Unknown location",
+      lat: data.latitude,
+      lon: data.longitude,
+      country: data.countryName || "",
+      state: data.principalSubdivision || "",
+    };
   } catch (error) {
-    console.error('Failed to fetch reverse geocoding:', error);
+    console.error("Failed to fetch reverse geocoding:", error);
     return null;
   }
 }

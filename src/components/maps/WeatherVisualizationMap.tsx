@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import type { Location, WeatherMapLayer } from '@/lib/types';
+import type { Location } from '@/lib/types';
 import type { HourlyForecastItem } from '@/lib/utils';
 import { LAYER_CONFIG } from '@/lib/constants';
 import { generateWeatherGrid, interpolateWeatherGrid } from '@/lib/api';
@@ -33,7 +33,7 @@ export function WeatherVisualizationMap({
   const gridDataRef = useRef<GridPoint[]>([]);
   const animationFrameRef = useRef<number | null>(null);
 
-  const { mapLayer, selectedHour, selectedDate } = useWeatherStore();
+  const { mapLayer, selectedHour } = useWeatherStore();
   const [hoverInfo, setHoverInfo] = useState<{ lat: number; lon: number; value: number } | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
@@ -117,11 +117,19 @@ export function WeatherVisualizationMap({
       },
       center: selectedLocation
         ? [selectedLocation.longitude, selectedLocation.latitude]
-        : [-0.1278, 51.5074],
-      zoom: selectedLocation ? 6 : 3,
+        : [51.3347, 35.7219],
+      zoom: 7.5,
       pitch: 0,
       bearing: 0,
       antialias: true,
+
+      // Disable map movement
+      dragPan: false,
+      scrollZoom: false,
+      boxZoom: false,
+      doubleClickZoom: false,
+      touchZoomRotate: false,
+      keyboard: false,
     });
 
     mapRef.current = map;
@@ -268,7 +276,6 @@ export function WeatherVisualizationMap({
         `<div class="weather-tooltip">
           <div class="font-medium text-white mb-1">${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E</div>
           <div class="text-sm text-slate-300">${layerConfig.icon} ${layerConfig.label}: <span class="text-white font-medium">${value.toFixed(1)}${layerConfig.unit}</span></div>
-          <div class="text-xs text-slate-400 mt-2">Click to inspect</div>
         </div>`
       );
     }
@@ -278,7 +285,7 @@ export function WeatherVisualizationMap({
     if (mapRef.current && selectedLocation) {
       mapRef.current.flyTo({
         center: [selectedLocation.longitude, selectedLocation.latitude],
-        zoom: 6,
+        zoom: 7.5,
         essential: true,
       });
       addLocationMarker();
@@ -298,7 +305,7 @@ export function WeatherVisualizationMap({
       <div ref={mapContainerRef} className="w-full h-full" />
 
       <div className="absolute top-4 right-4 z-10">
-        <div className="bg-[#0d1525]/95 backdrop-blur-md rounded-lg p-3 shadow-xl min-w-[160px] animate-fade-in border border-white/10">
+        <div className="bg-[#233859] backdrop-blur-md rounded-lg p-3 shadow-xl min-w-40 animate-fade-in border border-white/10">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-lg">{layerConfig.icon}</span>
             <span className="font-semibold text-white">{layerConfig.label}</span>
@@ -320,26 +327,11 @@ export function WeatherVisualizationMap({
         </div>
       </div>
 
-      {hoverInfo && (
-        <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-64 bg-[#0d1525]/95 backdrop-blur-md rounded-lg p-3 shadow-xl animate-fade-in border border-white/10">
-          <div className="flex items-center gap-2 text-xs text-slate-300 mb-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-            Hover Values
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <div className="text-slate-400">Lat / Lng</div>
-            <div className="text-white font-mono">{hoverInfo.lat.toFixed(2)}° / {hoverInfo.lon.toFixed(2)}°</div>
-            <div className="text-slate-400">{layerConfig.label}</div>
-            <div className="text-white font-medium">{hoverInfo.value.toFixed(1)}{layerConfig.unit}</div>
-          </div>
-        </div>
-      )}
-
       {!isMapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[var(--background)]/90 backdrop-blur-sm z-20">
+        <div className="absolute inset-0 flex items-center justify-center bg-(--background)/90 backdrop-blur-sm z-20">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-400">Loading weather map...</p>
+            <p className="text-slate-300">Loading weather map...</p>
           </div>
         </div>
       )}

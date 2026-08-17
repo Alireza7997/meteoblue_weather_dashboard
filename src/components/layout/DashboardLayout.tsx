@@ -15,8 +15,9 @@ import { useWeather } from '@/hooks/useWeather';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSectionInView } from '@/hooks/useSectionInView';
 import { useWeatherStore } from '@/lib/store';
-import type { AppLocation } from '@/lib/types';
+import type { AppLocation, WeatherMapLayer } from '@/lib/types';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
+import Portal from '../Portal';
 
 function AnimatedSection({
   children,
@@ -40,8 +41,10 @@ function AnimatedSection({
   );
 }
 
+function formatLocationName(location: AppLocation | null): string { if (!location) return ''; const parts = [location.name !== 'Loading...' && location.name !== 'Selected Location' ? location.name : 'Current Location', location.state, location.country,].filter(Boolean); return parts.join(', ').replace('Iran (Islamic Republic of)', 'Iran'); }
+
 export function DashboardLayout() {
-  const { selectedLocation, setSelectedLocation, mapModalOpen, setMapModalOpen } = useWeatherStore();
+  const { selectedLocation, setSelectedLocation, mapModalOpen, setMapModalOpen, mapLayer, setMapLayer } = useWeatherStore();
   const { getCurrentLocation, isLoading: isGeoLoading } = useGeolocation();
 
   const {
@@ -54,12 +57,6 @@ export function DashboardLayout() {
     error,
     refetch,
   } = useWeather(selectedLocation);
-
-  // Determine if it's night based on current hour
-  const isNight = useMemo(() => {
-    const hour = new Date().getHours();
-    return hour < 6 || hour > 20;
-  }, []);
 
   const handleSearchSelect = (location: AppLocation) => {
     setSelectedLocation(location);
@@ -76,6 +73,8 @@ export function DashboardLayout() {
     refetch();
   };
 
+  const locationName = formatLocationName(selectedLocation);
+  
   return (
     <div className="min-h-screen bg-(--background) flex flex-col relative">
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
@@ -91,14 +90,14 @@ export function DashboardLayout() {
 
       <main className="relative z-10 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pb-8">
         {/* Gradient overlay to reduce brightness of lower sections */}
-        <div className="fixed bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-[var(--background)] via-[var(--background)]/80 to-transparent pointer-events-none z-20" />
+        <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
         <div className="max-w-7xl mx-auto space-y-8">
           {error && (
             <div className="glass-strong border border-rose-glow/30 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
-              <AlertTriangle className="text-rose-glow w-5 h-5 flex-shrink-0" />
+              <AlertTriangle className="text-rose-glow w-5 h-5 shrink-0" />
               <p className="text-sm text-rose-300 flex-1">{error}</p>
-              <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1">
+              <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1 rounded-lg flex flex-nowrap items-center gap-1">
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Retry
               </button>
@@ -109,7 +108,7 @@ export function DashboardLayout() {
             <>
               <AnimatedSection animation="animate-section-blur" delay={100}>
                 <CurrentWeatherPanel
-                  locationName={selectedLocation ? `${selectedLocation.name === 'Loading...' || selectedLocation.name === 'Selected Location' ? 'Current Location' : selectedLocation.name}${selectedLocation.country && selectedLocation.country !== '' ? `, ${selectedLocation.country}` : ''}` : ''}
+                  locationName={locationName}
                   current={currentWeather}
                   isLoading={isLoading}
                 />
@@ -147,18 +146,16 @@ export function DashboardLayout() {
                 <section aria-labelledby="weather-map-title" className="relative">
                   <div className="flex items-center justify-between mb-4">
                     <h2 id="weather-map-title" className="section-title">Weather Map</h2>
-                    <div className="text-sm text-muted-foreground">
-                      Layer: <span className="text-white font-medium capitalize">{useWeatherStore.getState().mapLayer}</span>
-                    </div>
+                    <LayerSelector value={mapLayer} onChange={setMapLayer} />
                   </div>
-                  <div className="aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden glass-vibrant relative">
+                  <div className="aspect-video md:aspect-21/9 rounded-2xl overflow-hidden glass-vibrant relative">
                     <WeatherVisualizationMap
                       selectedLocation={selectedLocation}
                       weatherData={hourlyForecast}
-                      className="pointer-events-none"
+                      className=""
                     />
                     {/* Gradient overlay to reduce interactivity feel */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent pointer-events-none" />
                   </div>
                 </section>
               </AnimatedSection>
@@ -176,7 +173,7 @@ export function DashboardLayout() {
           )}
 
           {selectedLocation && isLoading && (
-            <div className="fixed inset-0 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm z-50">
+            <div className="fixed inset-0 flex items-center justify-center bg-(--background)/80 backdrop-blur-sm z-50">
               <div className="glass-vibrant rounded-2xl p-8 text-center shadow-2xl animate-bounce-in">
                 <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
                 <p className="text-white">Loading weather data...</p>
@@ -188,12 +185,45 @@ export function DashboardLayout() {
       </main>
 
       {mapModalOpen && (
-        <MapModal
-          selectedLocation={selectedLocation}
-          onLocationSelect={handleSearchSelect}
-          onClose={() => setMapModalOpen(false)}
-        />
+        <Portal>
+          <MapModal
+            selectedLocation={selectedLocation}
+            onLocationSelect={handleSearchSelect}
+            onClose={() => setMapModalOpen(false)}
+          />
+        </Portal>
       )}
     </div>
+  );
+}
+
+interface LayerSelectorProps {
+  value: WeatherMapLayer;
+  onChange: (value: WeatherMapLayer) => void;
+}
+
+const LAYER_OPTIONS = [
+  { value: 'temperature', label: '🌡 Temperature' },
+  { value: 'precipitation', label: '🌧 Precipitation' },
+  { value: 'wind', label: '💨 Wind' },
+  { value: 'humidity', label: '💧 Humidity' },
+  { value: 'clouds', label: '☁ Clouds' },
+  { value: 'uv', label: '🔆 UV Index' },
+];
+
+function LayerSelector({ value, onChange }: LayerSelectorProps) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as WeatherMapLayer)}
+      className="input py-1.5 px-3 text-sm bg-slate-900/50"
+      style={{ width: 'auto', minWidth: 160 }}
+    >
+      {LAYER_OPTIONS.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   );
 }

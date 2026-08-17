@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+
 import type { AppLocation } from '@/lib/types';
-import { fetchGeocoding } from '@/lib/api';
+import { fetchReverseGeocoding } from '@/lib/api';
 
 interface UseGeocodingReturn {
   search: (query: string) => Promise<AppLocation[]>;
@@ -21,12 +22,15 @@ export function useGeocoding(): UseGeocodingReturn {
     setError(null);
 
     try {
-      const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}`);
-      const results = await response.json();
+      const response = await fetch(
+        `/api/geocoding?q=${encodeURIComponent(query)}`
+      );
 
       if (!response.ok) {
         throw new Error('Geocoding failed');
       }
+
+      const results = await response.json();
 
       return results.map((result: any) => ({
         latitude: result.lat,
@@ -64,27 +68,57 @@ export function useGeocodingPosition() {
       setError(null);
 
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            name: 'Current Location',
-            country: '',
-          });
-          setIsLoading(false);
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          try {
+            const result = await fetchReverseGeocoding(
+              latitude,
+              longitude
+            );
+
+            if (!result) {
+              throw new Error('Failed to determine your location');
+            }
+
+            resolve({
+              latitude: result.lat,
+              longitude: result.lon,
+              name: result.name,
+              country: result.country,
+              state: result.state,
+              localNames: result.local_names,
+            });
+          } catch (err) {
+            const message =
+              err instanceof Error
+                ? err.message
+                : 'Failed to reverse geocode location';
+
+            setError(message);
+            resolve(null);
+          } finally {
+            setIsLoading(false);
+          }
         },
         (err) => {
           let message = 'Failed to get location';
+
           if (err.code === err.PERMISSION_DENIED) {
             message = 'Location permission denied';
           } else if (err.code === err.TIMEOUT) {
             message = 'Location request timed out';
           }
+
           setError(message);
           setIsLoading(false);
           resolve(null);
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
       );
     });
   }, []);
@@ -92,7 +126,6 @@ export function useGeocodingPosition() {
   return { getCurrentLocation, isLoading, error };
 }
 
-// Alias for backwards compatibility
 export const useGeolocation = useGeocodingPosition;
 
 export function useDebounce<T>(value: T, delay: number): T {

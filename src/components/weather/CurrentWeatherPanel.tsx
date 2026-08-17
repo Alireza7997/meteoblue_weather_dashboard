@@ -30,7 +30,7 @@ interface StatItemProps {
 function StatItem({ icon, label, value, color, delay, highlight }: StatItemProps) {
   return (
     <div
-      className="group relative rounded-2xl px-5 py-4 cursor-default animate-fade-in transition-all duration-300"
+      className="group relative rounded-2xl px-5 py-4 cursor-default animate-fade-in transition-all duration-300 w-42"
       style={{
         animationDelay: `${delay}ms`,
         transformStyle: 'preserve-3d',
@@ -73,7 +73,7 @@ function StatItem({ icon, label, value, color, delay, highlight }: StatItemProps
             {icon}
           </span>
           <div className="text-center">
-            <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">{label}</div>
+            <div className="text-[10px] font-medium text-slate-300 uppercase tracking-wider">{label}</div>
             <div className="text-sm font-semibold text-white mt-0.5">{value}</div>
           </div>
         </div>
@@ -137,10 +137,10 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
         <StatItem
           icon="🔆"
           label="UV Index"
-          value={current.uv}
-          color="#fbbf24"
+          value={current.uv === 'Low' ? 'Low' : current.uv === 'Moderate' ? 'Moderate' : 'High'}
+          color={current.uv === 'Low' ? '#4ade80' : current.uv === 'Moderate' ? '#fbbf24' : '#ef4444'}
           delay={300}
-          highlight={parseFloat(current.uv) > 5}
+          highlight={current.uv === 'High'}
         />
       </div>
     </div>

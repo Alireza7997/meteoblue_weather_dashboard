@@ -1,18 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
-
-const geist = Geist({
-  variable: "--font-geist",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 export const metadata: Metadata = {
   title: "Advanced Weather Analytics Dashboard",
@@ -42,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body
-        className={`${geist.variable} ${geistMono.variable} min-h-full flex flex-col bg-background text-(--color-foreground)`}
+        className={`${GeistSans.variable} ${GeistMono.variable} min-h-full flex flex-col bg-background text-(--color-foreground)`}
       >
         {children}
       </body>

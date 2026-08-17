@@ -9,8 +9,8 @@ interface HourlyForecastProps {
   timezoneOffset: number;
 }
 
-export function HourlyForecast({ hourly, timezoneOffset }: HourlyForecastProps) {
-  const { selectedHour, setSelectedHour, selectedDate } = useWeatherStore();
+export function HourlyForecast({ hourly }: HourlyForecastProps) {
+  const { selectedHour, setSelectedHour } = useWeatherStore();
   const [scrollPosition, setScrollPosition] = useState(0);
 
   const scrollToHour = (hour: number) => {
@@ -24,7 +24,7 @@ export function HourlyForecast({ hourly, timezoneOffset }: HourlyForecastProps) 
     <div className="panel">
       <div className="flex items-center justify-between mb-4">
         <h3 className="section-title">Hourly Forecast</h3>
-        <div className="text-sm text-slate-400">Next 24 hours</div>
+        <div className="text-sm text-slate-300">Next 24 hours</div>
       </div>
 
       <div
@@ -32,7 +32,7 @@ export function HourlyForecast({ hourly, timezoneOffset }: HourlyForecastProps) 
         onScroll={(e) => setScrollPosition(e.currentTarget.scrollLeft)}
       >
         <div
-          className="flex gap-3 min-w-max"
+          className="flex gap-3 min-w-max p-2"
           style={{ paddingLeft: 16, paddingRight: 16 }}
         >
           {hourly.map((hour, index) => (
@@ -48,10 +48,10 @@ export function HourlyForecast({ hourly, timezoneOffset }: HourlyForecastProps) 
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-white/5">
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-slate-300">
           Selected: {selectedHour}:00
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-slate-300">
           <span>Now</span>
           <div className="w-32 h-1 bg-slate-700 rounded-full relative overflow-hidden">
             <div
@@ -75,11 +75,11 @@ interface HourlyCardProps {
   onClick: () => void;
 }
 
-function HourlyCard({ hour, index, isSelected, onClick }: HourlyCardProps) {
+function HourlyCard({ hour, isSelected, onClick }: HourlyCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 min-w-[80px] ${
+      className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 min-w-20 ${
         isSelected
           ? 'glass-strong ring-2 ring-cyan-400/50 shadow-lg shadow-cyan-400/10'
           : 'glass hover:bg-white/5'
@@ -89,8 +89,8 @@ function HourlyCard({ hour, index, isSelected, onClick }: HourlyCardProps) {
       <div className="text-xs font-medium text-slate-300">{hour.time}:00</div>
       <div className="text-3xl">{hour.icon}</div>
       <div className="text-lg font-bold text-white">{hour.temp}°</div>
-      <div className="text-xs text-slate-400">{hour.pop}% 🌧</div>
-      <div className="text-xs text-slate-500">{hour.windSpeed} km/h</div>
+      <div className="text-xs text-slate-300">{hour.pop}% 🌧</div>
+      <div className="text-xs text-slate-300">{hour.windSpeed} km/h</div>
     </button>
   );
 }

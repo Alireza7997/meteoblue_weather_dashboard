@@ -18,8 +18,19 @@ export function formatHumidity(humidity: number): string {
   return `${humidity}%`;
 }
 
-export function formatUVIndex(uvi: number): string {
-  return `${uvi.toFixed(1)}`;
+export function formatUVIndex(uvi: number | string): string {
+  if (typeof uvi === 'string') {
+    return uvi;
+  }
+  if (uvi < 3) return 'Low';
+  if (uvi < 6) return 'Moderate';
+  return 'High';
+}
+
+export function getUVIndexCategory(uvi: number): string {
+  if (uvi < 3) return 'Low';
+  if (uvi < 6) return 'Moderate';
+  return 'High';
 }
 
 export function formatTime(timestamp: number, timezoneOffset: number): string {
@@ -54,7 +65,7 @@ export function getWeatherDescription(weather: WeatherCondition[]): string {
 }
 
 export function getCurrentWeatherInfo(
-  current: CurrentWeather,
+  current: CurrentWeather & { uvi: string | number },
   timezoneOffset: number
 ): {
   temp: string;
@@ -171,10 +182,11 @@ export function generateWeatherInsights(
     }
   }
 
-  if (current.uvi < 3) {
+  const uvCategory = typeof current.uvi === 'string' ? current.uvi : getUVIndexCategory(current.uvi);
+  if (uvCategory === 'Low') {
     insights.push({
       type: 'success',
-      message: 'Low UV index - minimal sun protection needed',
+      message: 'Low UV - minimal sun protection needed',
       icon: '🔆',
     });
   }

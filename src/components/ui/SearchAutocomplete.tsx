@@ -118,7 +118,7 @@ export function SearchAutocomplete({
       <div className="relative">
         <label htmlFor="location-search" className="sr-only">Search location</label>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-5 h-5" />
           <input
             ref={inputRef}
             id="location-search"
@@ -135,7 +135,7 @@ export function SearchAutocomplete({
           {query && (
             <button
               onClick={handleClear}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white transition-colors"
               aria-label="Clear search"
             >
               <X className="w-5 h-5" />
@@ -161,12 +161,12 @@ export function SearchAutocomplete({
               role="option"
               aria-selected={index === selectedIndex}
             >
-              <MapPin className="text-cyan-400 w-5 h-5 flex-shrink-0" />
+              <MapPin className="text-cyan-400 w-5 h-5 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-white truncate">
                   {result.name}
-                  {result.state && <span className="text-slate-400 ml-1">, {result.state}</span>}
-                  {result.country && <span className="text-slate-400 ml-1">, {result.country.toUpperCase()}</span>}
+                  {result.state && <span className="text-slate-300 ml-1">, {result.state}</span>}
+                  {result.country && <span className="text-slate-300 ml-1">, {result.country.toUpperCase()}</span>}
                 </p>
                 <p className="text-xs text-slate-500 truncate">
                   {result.latitude.toFixed(4)}°, {result.longitude.toFixed(4)}°
@@ -180,7 +180,7 @@ export function SearchAutocomplete({
       {(isLoading || isOpen) && results.length === 0 && query.length >= 2 && (
         <div className="absolute top-full left-0 right-0 mt-2 glass-strong rounded-xl shadow-2xl border border-white/10 p-6 text-center animate-fade-in">
           <Loader2 className="w-6 h-6 text-cyan-400 animate-spin mx-auto mb-2" />
-          <p className="text-sm text-slate-400">Searching...</p>
+          <p className="text-sm text-slate-300">Searching...</p>
         </div>
       )}
     </div>
