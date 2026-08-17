@@ -5,6 +5,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Location } from '@/lib/types';
 import { useReverseGeocoding } from '@/hooks/useWeather';
+import { useLocale } from '@/hooks/useLocale';
 
 interface LocationSelectionMapProps {
   selectedLocation: Location | null;
@@ -20,6 +21,8 @@ export function LocationSelectionMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markerRef = useRef<maplibregl.Marker | null>(null);
+
+  const { t, formatNumber } = useLocale();
 
   const {
     reverseGeocode,
@@ -85,6 +88,11 @@ export function LocationSelectionMap({
       .addTo(mapRef.current);
   }, []);
 
+  const fallbackLocationNameRef = useRef(t.map.selectedLocationFallback);
+  useEffect(() => {
+    fallbackLocationNameRef.current = t.map.selectedLocationFallback;
+  }, [t.map.selectedLocationFallback]);
+
   const handleMapClick = useCallback(
     async (e: maplibregl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
@@ -136,7 +144,7 @@ export function LocationSelectionMap({
         onLocationSelect({
           latitude: lat,
           longitude: lng,
-          name: 'Selected Location',
+          name: fallbackLocationNameRef.current,
           country: '',
         });
       }
@@ -249,15 +257,15 @@ export function LocationSelectionMap({
         <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-72 bg-black/70 rounded-lg p-3 shadow-xl animate-fade-in">
           <div className="flex items-center gap-2 text-xs text-slate-300 mb-1">
             <span className="w-2 h-2 rounded-full bg-cyan-400" />
-            Selected Coordinates
+            {t.map.selectedCoordinates}
           </div>
 
           <div className="font-mono text-sm text-white space-y-1">
             <div>
-              Lat: {coordinates.lat.toFixed(4)}°
+              {t.map.lat}: {formatNumber(coordinates.lat, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}°
             </div>
             <div>
-              Lng: {coordinates.lng.toFixed(4)}°
+              {t.map.lng}: {formatNumber(coordinates.lng, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}°
             </div>
           </div>
         </div>
@@ -267,7 +275,7 @@ export function LocationSelectionMap({
         <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-xs sm:w-auto glass-strong rounded-lg px-4 py-2 shadow-xl animate-fade-in">
           <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
             <div className="w-4 h-4 shrink-0 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-            Resolving location...
+            {t.map.resolving}
           </div>
         </div>
       )}

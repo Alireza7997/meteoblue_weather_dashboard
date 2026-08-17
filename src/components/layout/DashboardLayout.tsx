@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { WeatherVisualizationMap } from '@/components/maps/WeatherVisualizationMap';
 import { CurrentWeatherPanel } from '@/components/weather/CurrentWeatherPanel';
 import { HourlyForecast } from '@/components/weather/HourlyForecast';
@@ -14,6 +14,7 @@ import { MapModal } from '@/components/ui/MapModal';
 import { useWeather } from '@/hooks/useWeather';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSectionInView } from '@/hooks/useSectionInView';
+import { useLocale } from '@/hooks/useLocale';
 import { useWeatherStore } from '@/lib/store';
 import type { AppLocation, WeatherMapLayer } from '@/lib/types';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -41,11 +42,21 @@ function AnimatedSection({
   );
 }
 
-function formatLocationName(location: AppLocation | null): string { if (!location) return ''; const parts = [location.name !== 'Loading...' && location.name !== 'Selected Location' ? location.name : 'Current Location', location.state, location.country,].filter(Boolean); return parts.join(', ').replace('Iran (Islamic Republic of)', 'Iran'); }
+function formatLocationName(location: AppLocation | null, currentLocationLabel: string): string {
+  if (!location) return '';
+  const parts = [
+    location.name !== 'Loading...' && location.name !== 'Selected Location' ? location.name : currentLocationLabel,
+    location.state,
+    location.country,
+  ].filter(Boolean);
+  return parts.join(', ').replace('Iran (Islamic Republic of)', 'Iran');
+}
 
 export function DashboardLayout() {
   const { selectedLocation, setSelectedLocation, mapModalOpen, setMapModalOpen, mapLayer, setMapLayer } = useWeatherStore();
   const { getCurrentLocation, isLoading: isGeoLoading } = useGeolocation();
+  const { t } = useLocale();
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   const {
     weatherData,
@@ -63,18 +74,20 @@ export function DashboardLayout() {
   };
 
   const handleUseCurrentLocation = async () => {
-    const location = await getCurrentLocation();
+    const { location, error: geoMsg } = await getCurrentLocation();
+    setGeoError(geoMsg ?? null);
     if (location) {
       setSelectedLocation(location);
     }
   };
 
   const handleRetry = () => {
+    setGeoError(null);
     refetch();
   };
 
-  const locationName = formatLocationName(selectedLocation);
-  
+  const locationName = formatLocationName(selectedLocation, t.dashboard.currentLocation);
+
   return (
     <div className="min-h-screen bg-(--background) flex flex-col relative">
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
@@ -92,13 +105,13 @@ export function DashboardLayout() {
         <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-          {error && (
+          {(error || geoError) && (
             <div className="glass-strong border border-rose-glow/30 rounded-xl p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3 animate-slide-up">
               <AlertTriangle className="text-rose-glow w-5 h-5 shrink-0" />
-              <p className="text-sm text-rose-300 flex-1 basis-full sm:basis-auto">{error}</p>
+              <p className="text-sm text-rose-300 flex-1 basis-full sm:basis-auto">{error || geoError}</p>
               <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1 rounded-lg flex flex-nowrap items-center gap-1 shrink-0">
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Retry
+                <RefreshCw className="w-4 h-4 me-1" />
+                {t.actions.retry}
               </button>
             </div>
           )}
@@ -144,7 +157,7 @@ export function DashboardLayout() {
               <AnimatedSection animation="animate-section-left" delay={400}>
                 <section aria-labelledby="weather-map-title" className="relative">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <h2 id="weather-map-title" className="section-title mb-0">Weather Map</h2>
+                    <h2 id="weather-map-title" className="section-title mb-0">{t.map.title}</h2>
                     <LayerSelector value={mapLayer} onChange={setMapLayer} />
                   </div>
                   <div className="aspect-4/3 sm:aspect-video lg:aspect-21/9 rounded-2xl overflow-hidden glass-vibrant relative">
@@ -163,9 +176,9 @@ export function DashboardLayout() {
           {!selectedLocation && !isLoading && (
             <div className="glass-vibrant rounded-2xl p-6 sm:p-12 text-center animate-fade-in mt-4 sm:mt-12">
               <div className="text-4xl sm:text-6xl mb-4">🌍</div>
-              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Select a Location</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">{t.dashboard.selectLocationTitle}</h3>
               <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-                Search for a city, click the map button, or use your current location to begin exploring weather analytics.
+                {t.dashboard.selectLocationDesc}
               </p>
             </div>
           )}
@@ -174,7 +187,7 @@ export function DashboardLayout() {
             <div className="fixed inset-0 flex items-center justify-center bg-(--background)/80 backdrop-blur-sm z-50 px-4">
               <div className="glass-vibrant rounded-2xl p-6 sm:p-8 text-center shadow-2xl animate-bounce-in w-full max-w-sm">
                 <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
-                <p className="text-white">Loading weather data...</p>
+                <p className="text-white">{t.dashboard.loadingWeather}</p>
                 <p className="text-sm text-muted-foreground mt-2 truncate">{selectedLocation.name}</p>
               </div>
             </div>
@@ -200,16 +213,18 @@ interface LayerSelectorProps {
   onChange: (value: WeatherMapLayer) => void;
 }
 
-const LAYER_OPTIONS = [
-  { value: 'temperature', label: '🌡 Temperature' },
-  { value: 'precipitation', label: '🌧 Precipitation' },
-  { value: 'wind', label: '💨 Wind' },
-  { value: 'humidity', label: '💧 Humidity' },
-  { value: 'clouds', label: '☁ Clouds' },
-  { value: 'uv', label: '🔆 UV Index' },
+const LAYER_OPTIONS: { value: WeatherMapLayer }[] = [
+  { value: 'temperature' },
+  { value: 'precipitation' },
+  { value: 'wind' },
+  { value: 'humidity' },
+  { value: 'clouds' },
+  { value: 'uv' },
 ];
 
 function LayerSelector({ value, onChange }: LayerSelectorProps) {
+  const { t } = useLocale();
+
   return (
     <select
       value={value}
@@ -218,7 +233,7 @@ function LayerSelector({ value, onChange }: LayerSelectorProps) {
     >
       {LAYER_OPTIONS.map((option) => (
         <option key={option.value} value={option.value}>
-          {option.label}
+          {t.layerOptions[option.value]}
         </option>
       ))}
     </select>

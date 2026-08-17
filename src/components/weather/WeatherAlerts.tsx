@@ -1,17 +1,20 @@
 'use client';
 
 import type { WeatherInsight } from '@/lib/utils';
+import { useLocale } from '@/hooks/useLocale';
 
 interface WeatherAlertsProps {
   insights: WeatherInsight[];
 }
 
 export function WeatherAlerts({ insights }: WeatherAlertsProps) {
+  const { t } = useLocale();
+
   if (!insights.length) return null;
 
   return (
     <div className="panel">
-      <h3 className="section-title mb-4">Weather Insights</h3>
+      <h3 className="section-title mb-4">{t.insights.title}</h3>
       <div className="space-y-2">
         {insights.map((insight, index) => (
           <div

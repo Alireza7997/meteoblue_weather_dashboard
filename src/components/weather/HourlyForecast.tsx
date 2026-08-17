@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { HourlyForecastItem } from '@/lib/utils';
 import { useWeatherStore } from '@/lib/store';
+import { useLocale } from '@/hooks/useLocale';
 
 interface HourlyForecastProps {
   hourly: HourlyForecastItem[];
@@ -11,6 +12,7 @@ interface HourlyForecastProps {
 
 export function HourlyForecast({ hourly }: HourlyForecastProps) {
   const { selectedHour, setSelectedHour } = useWeatherStore();
+  const { t, formatNumber } = useLocale();
   const [scrollPosition, setScrollPosition] = useState(0);
 
   const scrollToHour = (hour: number) => {
@@ -23,8 +25,8 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
   return (
     <div className="panel">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <h3 className="section-title mb-0">Hourly Forecast</h3>
-        <div className="text-sm text-slate-300">Next 24 hours</div>
+        <h3 className="section-title mb-0">{t.hourly.title}</h3>
+        <div className="text-sm text-slate-300">{t.hourly.next24}</div>
       </div>
 
       <div
@@ -49,19 +51,19 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
         <div className="text-xs text-slate-300">
-          Selected: {selectedHour}:00
+          {t.hourly.selected}: {formatNumber(selectedHour)}:00
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
-          <span>Now</span>
+          <span>{t.hourly.now}</span>
           <div className="w-20 sm:w-32 h-1 bg-slate-700 rounded-full relative overflow-hidden">
             <div
-              className="absolute top-0 left-0 h-full bg-cyan-400 rounded-full transition-all duration-300"
+              className="absolute top-0 start-0 h-full bg-cyan-400 rounded-full transition-all duration-300"
               style={{
                 width: `${Math.min(100, (selectedHour / 24) * 100)}%`,
               }}
             />
           </div>
-          <span>+24h</span>
+          <span dir="ltr">+24h</span>
         </div>
       </div>
     </div>
@@ -76,6 +78,8 @@ interface HourlyCardProps {
 }
 
 function HourlyCard({ hour, isSelected, onClick }: HourlyCardProps) {
+  const { t, formatNumber } = useLocale();
+
   return (
     <button
       onClick={onClick}
@@ -86,11 +90,15 @@ function HourlyCard({ hour, isSelected, onClick }: HourlyCardProps) {
       }`}
       style={{ transform: isSelected ? 'scale(1.05)' : 'scale(1)' }}
     >
-      <div className="text-xs font-medium text-slate-300">{hour.time}:00</div>
+      <div className="text-xs font-medium text-slate-300" dir="ltr">
+        {hour.timeLabel}:{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
+      </div>
       <div className="text-3xl">{hour.icon}</div>
-      <div className="text-lg font-bold text-white">{hour.temp}°</div>
-      <div className="text-xs text-slate-300">{hour.pop}% 🌧</div>
-      <div className="text-xs text-slate-300">{hour.windSpeed} km/h</div>
+      <div className="text-lg font-bold text-white">{formatNumber(hour.temp)}°</div>
+      <div className="text-xs text-slate-300">{formatNumber(hour.pop)}% 🌧</div>
+      <div className="text-xs text-slate-300">
+        {formatNumber(hour.windSpeed)} {t.units.kmh}
+      </div>
     </button>
   );
 }

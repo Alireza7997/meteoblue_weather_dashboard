@@ -40,6 +40,11 @@
     overflow-x: hidden;
   }
 
+  html[dir='rtl'] body {
+    font-family: var(--font-vazirmatn), system-ui, sans-serif;
+    font-feature-settings: normal;
+  }
+
   /* 3D depth for sections */
   section {
     transform-style: preserve-3d;

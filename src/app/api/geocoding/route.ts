@@ -4,13 +4,14 @@ import { fetchGeocoding } from '@/lib/api';
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const q = searchParams.get('q');
+  const lang = searchParams.get('lang') ?? 'en';
 
   if (!q || q.length < 2) {
     return NextResponse.json([]);
   }
 
   try {
-    const data = await fetchGeocoding(q);
+    const data = await fetchGeocoding(q, lang);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Geocoding API error:', error);

@@ -5,6 +5,7 @@ import type { Location, WeatherData } from '@/lib/types';
 import { fetchWeatherData, fetchReverseGeocoding } from '@/lib/api';
 import { processHourlyForecast, processDailyForecast, getCurrentWeatherInfo, generateWeatherInsights } from '@/lib/utils';
 import { useWeatherStore } from '@/lib/store';
+import { useLocaleStore } from '@/lib/i18n';
 
 interface UseWeatherReturn {
   weatherData: WeatherData | null;
@@ -27,6 +28,7 @@ export function useWeather(location: Location | null): UseWeatherReturn {
   const [error, setError] = useState<string | null>(null);
 
   const { selectedDate, selectedHour, setLoading, setError: setStoreError } = useWeatherStore();
+  const locale = useLocaleStore((state) => state.locale);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -58,10 +60,10 @@ export function useWeather(location: Location | null): UseWeatherReturn {
       }
 
       setWeatherData(data);
-      setCurrentWeather(getCurrentWeatherInfo(data.current, data.timezone_offset));
-      setHourlyForecast(processHourlyForecast(data.hourly, data.timezone_offset));
-      setDailyForecast(processDailyForecast(data.daily, data.timezone_offset));
-      setInsights(generateWeatherInsights(data.current, data.hourly, data.daily, data.timezone_offset));
+      setCurrentWeather(getCurrentWeatherInfo(data.current, data.timezone_offset, locale));
+      setHourlyForecast(processHourlyForecast(data.hourly, data.timezone_offset, 24, locale));
+      setDailyForecast(processDailyForecast(data.daily, data.timezone_offset, locale));
+      setInsights(generateWeatherInsights(data.current, data.hourly, data.daily, data.timezone_offset, locale));
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch weather data';
       setError(message);
@@ -70,7 +72,7 @@ export function useWeather(location: Location | null): UseWeatherReturn {
       setIsLoading(false);
       setLoading(false);
     }
-  }, [location, setLoading, setStoreError]);
+  }, [location, locale, setLoading, setStoreError]);
 
   useEffect(() => {
     fetchData();
@@ -83,12 +85,12 @@ export function useWeather(location: Location | null): UseWeatherReturn {
 
   useEffect(() => {
     if (weatherData) {
-      setCurrentWeather(getCurrentWeatherInfo(weatherData.current, weatherData.timezone_offset));
-      setHourlyForecast(processHourlyForecast(weatherData.hourly, weatherData.timezone_offset));
-      setDailyForecast(processDailyForecast(weatherData.daily, weatherData.timezone_offset));
-      setInsights(generateWeatherInsights(weatherData.current, weatherData.hourly, weatherData.daily, weatherData.timezone_offset));
+      setCurrentWeather(getCurrentWeatherInfo(weatherData.current, weatherData.timezone_offset, locale));
+      setHourlyForecast(processHourlyForecast(weatherData.hourly, weatherData.timezone_offset, 24, locale));
+      setDailyForecast(processDailyForecast(weatherData.daily, weatherData.timezone_offset, locale));
+      setInsights(generateWeatherInsights(weatherData.current, weatherData.hourly, weatherData.daily, weatherData.timezone_offset, locale));
     }
-  }, [weatherData, selectedDate, selectedHour]);
+  }, [weatherData, selectedDate, selectedHour, locale]);
 
   return {
     weatherData,

@@ -4,6 +4,7 @@ import { LocationSelectionMap } from '@/components/maps/LocationSelectionMap';
 import { X } from 'lucide-react';
 import type { AppLocation } from '@/lib/types';
 import { useScrollLock } from '@/hooks/useScrollLock';
+import { useLocale } from '@/hooks/useLocale';
 
 interface MapModalProps {
   selectedLocation: AppLocation | null;
@@ -12,6 +13,7 @@ interface MapModalProps {
 }
 
 export function MapModal({ selectedLocation, onLocationSelect, onClose }: MapModalProps) {
+  const { t } = useLocale();
 
   useScrollLock({locked: true})
   return (
@@ -21,11 +23,11 @@ export function MapModal({ selectedLocation, onLocationSelect, onClose }: MapMod
         onClick={onClose}
       />
       <div className="relative w-full max-w-full sm:max-w-5xl h-[60vh] sm:h-[70vh] glass-strong rounded-2xl overflow-hidden shadow-2xl animate-bounce-in">
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 end-3 z-10">
           <button
             onClick={onClose}
             className="btn-icon bg-slate-900/70 backdrop-blur-md"
-            aria-label="Close map"
+            aria-label={t.actions.closeMap}
           >
             <X className="w-5 h-5" />
           </button>

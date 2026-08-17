@@ -8,6 +8,7 @@ import type { HourlyForecastItem } from '@/lib/utils';
 import { LAYER_CONFIG } from '@/lib/constants';
 import { generateWeatherGrid, interpolateWeatherGrid } from '@/lib/api';
 import { useWeatherStore } from '@/lib/store';
+import { useLocale } from '@/hooks/useLocale';
 
 interface WeatherVisualizationMapProps {
   selectedLocation: Location | null;
@@ -34,10 +35,24 @@ export function WeatherVisualizationMap({
   const animationFrameRef = useRef<number | null>(null);
 
   const { mapLayer, selectedHour } = useWeatherStore();
+  const { t, formatNumber } = useLocale();
   const [hoverInfo, setHoverInfo] = useState<{ lat: number; lon: number; value: number } | null>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   const layerConfig = LAYER_CONFIG[mapLayer];
+  const layerLabel = t.layers[mapLayer];
+  const popupInfoRef = useRef({ icon: layerConfig.icon, label: layerLabel, unit: layerConfig.unit });
+  useEffect(() => {
+    popupInfoRef.current = { icon: layerConfig.icon, label: layerLabel, unit: layerConfig.unit };
+  }, [layerConfig.icon, layerLabel, layerConfig.unit]);
+
+  const buildPopupHtml = (lat: number, lng: number, value: number) => {
+    const { icon, label, unit } = popupInfoRef.current;
+    return `<div class="weather-tooltip">
+      <div class="font-medium text-white mb-1">${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E</div>
+      <div class="text-sm text-slate-300">${icon} ${label}: <span class="text-white font-medium">${value.toFixed(1)}${unit}</span></div>
+    </div>`;
+  };
 
   const generateGridData = useCallback(() => {
     if (!selectedLocation || !weatherData) return;
@@ -143,13 +158,15 @@ export function WeatherVisualizationMap({
     });
 
     map.on('mousemove', handleMouseMove);
-    map.on('mouseleave', handleMouseLeave);
     map.on('click', handleMapClick);
+
+    const mapContainer = mapContainerRef.current;
+    mapContainer.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       map.off('mousemove', handleMouseMove);
-      map.off('mouseleave', handleMouseLeave);
       map.off('click', handleMapClick);
+      mapContainer.removeEventListener('mouseleave', handleMouseLeave);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
@@ -242,24 +259,14 @@ export function WeatherVisualizationMap({
     setHoverInfo({ lat, lon: lng, value });
 
     if (popupRef.current) {
-      popupRef.current.setLngLat(e.lngLat).setHTML(
-        `<div class="weather-tooltip">
-          <div class="font-medium text-white mb-1">${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E</div>
-          <div class="text-sm text-slate-300">${layerConfig.icon} ${layerConfig.label}: <span class="text-white font-medium">${value.toFixed(1)}${layerConfig.unit}</span></div>
-        </div>`
-      );
+      popupRef.current.setLngLat(e.lngLat).setHTML(buildPopupHtml(lat, lng, value));
     } else {
       popupRef.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, anchor: 'top' })
         .setLngLat(e.lngLat)
-        .setHTML(
-          `<div class="weather-tooltip">
-            <div class="font-medium text-white mb-1">${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E</div>
-            <div class="text-sm text-slate-300">${layerConfig.icon} ${layerConfig.label}: <span class="text-white font-medium">${value.toFixed(1)}${layerConfig.unit}</span></div>
-          </div>`
-        )
+        .setHTML(buildPopupHtml(lat, lng, value))
         .addTo(mapRef.current!);
     }
-  }, [layerConfig]);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     setHoverInfo(null);
@@ -272,14 +279,9 @@ export function WeatherVisualizationMap({
     const value = interpolateWeatherGrid(gridDataRef.current, lat, lng, 50);
 
     if (popupRef.current) {
-      popupRef.current.setLngLat(e.lngLat).setHTML(
-        `<div class="weather-tooltip">
-          <div class="font-medium text-white mb-1">${lat.toFixed(2)}° N, ${lng.toFixed(2)}° E</div>
-          <div class="text-sm text-slate-300">${layerConfig.icon} ${layerConfig.label}: <span class="text-white font-medium">${value.toFixed(1)}${layerConfig.unit}</span></div>
-        </div>`
-      );
+      popupRef.current.setLngLat(e.lngLat).setHTML(buildPopupHtml(lat, lng, value));
     }
-  }, [layerConfig]);
+  }, []);
 
   useEffect(() => {
     if (mapRef.current && selectedLocation) {
@@ -308,7 +310,7 @@ export function WeatherVisualizationMap({
         <div className="bg-[#233859] backdrop-blur-md rounded-lg p-2 sm:p-3 shadow-xl min-w-28 sm:min-w-40 max-w-[calc(100%-1rem)] animate-fade-in border border-white/10">
           <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
             <span className="text-base sm:text-lg">{layerConfig.icon}</span>
-            <span className="font-semibold text-white text-xs sm:text-base truncate">{layerConfig.label}</span>
+            <span className="font-semibold text-white text-xs sm:text-base truncate">{layerLabel}</span>
           </div>
           <div className="space-y-1.5">
             {legendColors.map((stop, index) => (
@@ -319,7 +321,7 @@ export function WeatherVisualizationMap({
                 />
                 <span className="text-slate-300 whitespace-nowrap">
                   {index === 0 ? '≤' : index === legendColors.length - 1 ? '≥' : ''}
-                  {stop.value}{layerConfig.unit}
+                  {formatNumber(stop.value)}{layerConfig.unit}
                 </span>
               </div>
             ))}
@@ -331,7 +333,7 @@ export function WeatherVisualizationMap({
         <div className="absolute inset-0 flex items-center justify-center bg-(--background)/90 backdrop-blur-sm z-20 p-4">
           <div className="flex flex-col items-center gap-3 sm:gap-4 text-center">
             <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm sm:text-base text-slate-300">Loading weather map...</p>
+            <p className="text-sm sm:text-base text-slate-300">{t.map.loading}</p>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useWeatherStore } from '@/lib/store';
+import { useLocale } from '@/hooks/useLocale';
 import type { DailyForecastItem } from '@/lib/utils';
 import type { WeatherMapLayer } from '@/lib/types';
 
@@ -12,6 +13,7 @@ interface ForecastTimelineProps {
 
 export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
   const { selectedHour, setSelectedHour } = useWeatherStore();
+  const { t, formatNumber } = useLocale();
 
   const currentDate = new Date();
   const currentHour = currentDate.getHours();
@@ -19,14 +21,14 @@ export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
   return (
     <div className="panel">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="section-title">Forecast Timeline</h3>
+        <h3 className="section-title">{t.timeline.title}</h3>
       </div>
 
       <div className="space-y-4">
         <div className="relative">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs text-slate-300 w-10 text-right">NOW</span>
-            <div className="flex-1 h-2 bg-slate-800 rounded-full relative overflow-hidden">
+            <span className="text-xs text-slate-300 w-10 text-end">{t.timeline.now}</span>
+            <div className="flex-1 h-2 bg-slate-800 rounded-full relative overflow-hidden" dir="ltr">
               <div
                 className="absolute top-0 left-0 h-full bg-linear-to-r from-cyan-400 to-blue-400 rounded-full"
                 style={{ width: `${(currentHour / 24) * 100}%` }}
@@ -36,10 +38,10 @@ export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
                 style={{ left: `${(currentHour / 24) * 100}%` }}
               />
             </div>
-            <span className="text-xs text-slate-300 w-16 text-left">+24h</span>
+            <span className="text-xs text-slate-300 w-16 text-start" dir="ltr">+24h</span>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto scrollbar-thin p-2">
+          <div className="flex gap-1 overflow-x-auto scrollbar-thin p-2" dir="ltr">
             {hourly.slice(0, 24).map((h, index) => (
               <button
                 key={h.timestamp}
@@ -52,8 +54,8 @@ export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
                     : 'glass hover:bg-white/5'
                 }`}
               >
-                <span className={`text-xs font-medium ${index === currentHour ? 'text-emerald-400' : 'text-slate-300'}`}>
-                  {h.time}:00
+                <span className={`text-xs font-medium ${index === currentHour ? 'text-emerald-400' : 'text-slate-300'}`} dir="ltr">
+                  {formatNumber(parseInt(h.time, 10))}:{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
                 </span>
                 <span className="text-lg">{index === selectedHour ? '●' : '○'}</span>
               </button>

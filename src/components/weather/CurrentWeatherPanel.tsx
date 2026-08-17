@@ -1,6 +1,8 @@
 'use client';
 
 import { WEATHER_ICONS } from '@/lib/constants';
+import { useLocale } from '@/hooks/useLocale';
+import { normalizeUvCategory } from '@/lib/utils';
 
 interface CurrentWeatherPanelProps {
   locationName: string;
@@ -80,7 +82,7 @@ function StatItem({ icon, label, value, color, delay, highlight, className = '' 
         </div>
 
         {highlight && (
-          <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+          <div className="absolute -top-1 -end-1 w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
         )}
       </div>
     </div>
@@ -88,6 +90,8 @@ function StatItem({ icon, label, value, color, delay, highlight, className = '' 
 }
 
 export function CurrentWeatherPanel({ locationName, current, isLoading }: CurrentWeatherPanelProps) {
+  const { t } = useLocale();
+
   if (isLoading || !current) {
     return (
       <div className="relative py-8">
@@ -131,19 +135,25 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
 
       {/* Stat items row */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 z-10" style={{ perspective: '1000px' }}>
-        <StatItem icon="💧" label="Humidity" value={current.humidity} color="#38bdf8" delay={100} />
-        <StatItem icon="💨" label="Wind" value={`${current.wind} ${current.windDir}`} color="#a78bfa" delay={150} />
-        <StatItem icon="📊" label="Pressure" value={current.pressure} color="#f472b6" delay={200} />
-        <StatItem icon="☁️" label="Clouds" value={current.clouds} color="#94a3b8" delay={250} />
-        <StatItem
-          icon="🔆"
-          label="UV Index"
-          value={current.uv === 'Low' ? 'Low' : current.uv === 'Moderate' ? 'Moderate' : 'High'}
-          color={current.uv === 'Low' ? '#4ade80' : current.uv === 'Moderate' ? '#fbbf24' : '#ef4444'}
-          delay={300}
-          highlight={current.uv === 'High'}
-          className="col-span-2 sm:col-span-1"
-        />
+        <StatItem icon="💧" label={t.stats.humidity} value={current.humidity} color="#38bdf8" delay={100} />
+        <StatItem icon="💨" label={t.stats.wind} value={`${current.wind} ${current.windDir}`} color="#a78bfa" delay={150} />
+        <StatItem icon="📊" label={t.stats.pressure} value={current.pressure} color="#f472b6" delay={200} />
+        <StatItem icon="☁️" label={t.stats.clouds} value={current.clouds} color="#94a3b8" delay={250} />
+        {(() => {
+          const uvCategory = normalizeUvCategory(current.uv);
+          const uvLabel = t.uv[uvCategory.toLowerCase() as 'low' | 'moderate' | 'high'];
+          return (
+            <StatItem
+              icon="🔆"
+              label={t.stats.uv}
+              value={uvLabel}
+              color={uvCategory === 'Low' ? '#4ade80' : uvCategory === 'Moderate' ? '#fbbf24' : '#ef4444'}
+              delay={300}
+              highlight={uvCategory === 'High'}
+              className="col-span-2 sm:col-span-1"
+            />
+          );
+        })()}
       </div>
     </div>
   );

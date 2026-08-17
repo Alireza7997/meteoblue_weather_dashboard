@@ -1,21 +1,32 @@
 import { format, isToday, isTomorrow } from '@/lib/date-fns';
 import type { CurrentWeather, HourlyForecast, DailyForecast, WeatherCondition } from './types';
 import { WEATHER_ICONS, getWindDirection } from './constants';
+import {
+  DEFAULT_LOCALE,
+  formatLocaleDate,
+  formatLocaleTime,
+  formatMessage,
+  formatNumber,
+  getDictionary,
+  translateCondition,
+  translateWindDirection,
+  type Locale,
+} from './i18n';
 
-export function formatTemperature(temp: number): string {
-  return `${Math.round(temp)}°C`;
+export function formatTemperature(temp: number, locale: Locale = DEFAULT_LOCALE): string {
+  return `${formatNumber(Math.round(temp), locale)}°C`;
 }
 
-export function formatWindSpeed(speed: number): string {
-  return `${Math.round(speed * 3.6)} km/h`;
+export function formatWindSpeed(speed: number, locale: Locale = DEFAULT_LOCALE): string {
+  return `${formatNumber(Math.round(speed * 3.6), locale)} ${getDictionary(locale).units.kmh}`;
 }
 
-export function formatPressure(pressure: number): string {
-  return `${pressure} hPa`;
+export function formatPressure(pressure: number, locale: Locale = DEFAULT_LOCALE): string {
+  return `${formatNumber(pressure, locale)} hPa`;
 }
 
-export function formatHumidity(humidity: number): string {
-  return `${humidity}%`;
+export function formatHumidity(humidity: number, locale: Locale = DEFAULT_LOCALE): string {
+  return `${formatNumber(humidity, locale)}%`;
 }
 
 export function formatUVIndex(uvi: number | string): string {
@@ -33,6 +44,15 @@ export function getUVIndexCategory(uvi: number): string {
   return 'High';
 }
 
+export type UvCategory = 'Low' | 'Moderate' | 'High';
+
+export function normalizeUvCategory(uv: string | number): UvCategory {
+  if (typeof uv === 'number') {
+    return uv < 3 ? 'Low' : uv < 6 ? 'Moderate' : 'High';
+  }
+  return uv === 'Moderate' || uv === 'High' ? uv : 'Low';
+}
+
 export function formatTime(timestamp: number, timezoneOffset: number): string {
   const date = new Date((timestamp + timezoneOffset) * 1000);
   return format(date, 'HH:mm');
@@ -43,30 +63,32 @@ export function formatHour(timestamp: number, timezoneOffset: number): string {
   return format(date, 'HH');
 }
 
-export function formatDay(timestamp: number, timezoneOffset: number): string {
+export function formatDay(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
   const date = new Date((timestamp + timezoneOffset) * 1000);
-  if (isToday(date)) return 'Today';
-  if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'EEE, MMM d');
+  const dict = getDictionary(locale);
+  if (isToday(date)) return dict.daily.today;
+  if (isTomorrow(date)) return dict.daily.tomorrow;
+  return formatLocaleDate(date, locale, 'full');
 }
 
-export function formatDayShort(timestamp: number, timezoneOffset: number): string {
+export function formatDayShort(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
   const date = new Date((timestamp + timezoneOffset) * 1000);
-  return format(date, 'EEE');
+  return formatLocaleDate(date, locale, 'weekday');
 }
 
 export function getWeatherIcon(iconCode: string): string {
   return WEATHER_ICONS[iconCode] || '🌤️';
 }
 
-export function getWeatherDescription(weather: WeatherCondition[]): string {
-  if (weather.length === 0) return 'Unknown';
-  return weather[0].description.charAt(0).toUpperCase() + weather[0].description.slice(1);
+export function getWeatherDescription(weather: WeatherCondition[], locale: Locale = DEFAULT_LOCALE): string {
+  if (weather.length === 0) return translateCondition('Unknown', locale);
+  return translateCondition(weather[0].description, locale);
 }
 
 export function getCurrentWeatherInfo(
   current: CurrentWeather & { uvi: string | number },
-  timezoneOffset: number
+  timezoneOffset: number,
+  locale: Locale = DEFAULT_LOCALE
 ): {
   temp: string;
   condition: string;
@@ -79,33 +101,35 @@ export function getCurrentWeatherInfo(
   clouds: string;
 } {
   return {
-    temp: formatTemperature(current.temp),
-    condition: getWeatherDescription(current.weather),
+    temp: formatTemperature(current.temp, locale),
+    condition: getWeatherDescription(current.weather, locale),
     icon: getWeatherIcon(current.weather[0]?.icon || '01d'),
-    humidity: formatHumidity(current.humidity),
-    wind: formatWindSpeed(current.wind_speed),
-    windDir: getWindDirection(current.wind_deg),
-    pressure: formatPressure(current.pressure),
+    humidity: formatHumidity(current.humidity, locale),
+    wind: formatWindSpeed(current.wind_speed, locale),
+    windDir: translateWindDirection(getWindDirection(current.wind_deg), locale),
+    pressure: formatPressure(current.pressure, locale),
     uv: formatUVIndex(current.uvi),
-    clouds: `${current.clouds}%`,
+    clouds: `${formatNumber(current.clouds, locale)}%`,
   };
 }
 
 export function processHourlyForecast(
   hourly: HourlyForecast[],
   timezoneOffset: number,
-  hours: number = 24
+  hours: number = 24,
+  locale: Locale = DEFAULT_LOCALE
 ) {
   return hourly.slice(0, hours).map((hour) => ({
     time: formatHour(hour.dt, timezoneOffset),
+    timeLabel: formatNumber(parseInt(formatHour(hour.dt, timezoneOffset), 10), locale),
     timestamp: hour.dt,
     temp: Math.round(hour.temp),
     pop: hour.pop ? Math.round(hour.pop * 100) : 0,
     precipitation: hour.rain?.['1h'] || hour.snow?.['1h'] || 0,
     icon: getWeatherIcon(hour.weather[0]?.icon || '01d'),
-    condition: getWeatherDescription(hour.weather),
+    condition: getWeatherDescription(hour.weather, locale),
     windSpeed: Math.round(hour.wind_speed * 3.6),
-    windDir: getWindDirection(hour.wind_deg),
+    windDir: translateWindDirection(getWindDirection(hour.wind_deg), locale),
     humidity: hour.humidity,
     clouds: hour.clouds ?? 0,
     uvi: hour.uvi ?? 0,
@@ -115,20 +139,21 @@ export function processHourlyForecast(
 
 export function processDailyForecast(
   daily: DailyForecast[],
-  timezoneOffset: number
+  timezoneOffset: number,
+  locale: Locale = DEFAULT_LOCALE
 ) {
   return daily.map((day) => ({
-    date: formatDay(day.dt, timezoneOffset),
-    dateShort: formatDayShort(day.dt, timezoneOffset),
+    date: formatDay(day.dt, timezoneOffset, locale),
+    dateShort: formatDayShort(day.dt, timezoneOffset, locale),
     timestamp: day.dt,
     tempMax: Math.round(day.temp.max),
     tempMin: Math.round(day.temp.min),
     pop: day.pop ? Math.round(day.pop * 100) : 0,
     precipitation: day.rain || day.snow || 0,
     icon: getWeatherIcon(day.weather[0]?.icon || '01d'),
-    condition: getWeatherDescription(day.weather),
+    condition: getWeatherDescription(day.weather, locale),
     windSpeed: day.wind_speed ? Math.round(day.wind_speed * 3.6) : 0,
-    windDir: day.wind_deg ? getWindDirection(day.wind_deg) : '',
+    windDir: day.wind_deg ? translateWindDirection(getWindDirection(day.wind_deg), locale) : '',
     humidity: day.humidity ?? 0,
     uvi: day.uvi ?? 0,
   }));
@@ -138,13 +163,15 @@ export function generateWeatherInsights(
   current: CurrentWeather,
   hourly: HourlyForecast[],
   daily: DailyForecast[],
-  timezoneOffset: number
+  timezoneOffset: number,
+  locale: Locale = DEFAULT_LOCALE
 ): { type: 'warning' | 'info' | 'success'; message: string; icon: string }[] {
+  const dict = getDictionary(locale);
   const insights: { type: 'warning' | 'info' | 'success'; message: string; icon: string }[] = [];
 
   const next24Hours = hourly.slice(0, 8);
   if (next24Hours.length === 0) {
-    insights.push({ type: 'info', message: 'No forecast data available', icon: '🌤' });
+    insights.push({ type: 'info', message: dict.insights.noData, icon: '🌤' });
     return insights;
   }
 
@@ -157,7 +184,7 @@ export function generateWeatherInsights(
   if (rainHours.length > 2) {
     insights.push({
       type: 'info',
-      message: 'Rain likely throughout the day',
+      message: dict.insights.rainLikely,
       icon: '🌧',
     });
   }
@@ -165,7 +192,9 @@ export function generateWeatherInsights(
   if (maxTemp - minTemp > 8) {
     insights.push({
       type: 'info',
-      message: `Temperature will vary by ${Math.round(maxTemp - minTemp)}°C`,
+      message: formatMessage(dict.insights.tempVary, {
+        value: formatNumber(Math.round(maxTemp - minTemp), locale),
+      }),
       icon: '🌡',
     });
   }
@@ -173,10 +202,13 @@ export function generateWeatherInsights(
   if (maxWind > 13.8) {
     const windTime = next24Hours.find((h) => h.wind_speed === maxWind);
     if (windTime) {
-      const time = formatTime(windTime.dt, timezoneOffset);
+      const time = formatLocaleTime(new Date((windTime.dt + timezoneOffset) * 1000), locale);
       insights.push({
         type: 'warning',
-        message: `Strong winds (${Math.round(maxWind * 3.6)} km/h) expected around ${time}`,
+        message: formatMessage(dict.insights.strongWind, {
+          speed: formatNumber(Math.round(maxWind * 3.6), locale),
+          time,
+        }),
         icon: '💨',
       });
     }
@@ -186,7 +218,7 @@ export function generateWeatherInsights(
   if (uvCategory === 'Low') {
     insights.push({
       type: 'success',
-      message: 'Low UV - minimal sun protection needed',
+      message: dict.insights.uvLow,
       icon: '🔆',
     });
   }
@@ -197,13 +229,17 @@ export function generateWeatherInsights(
     if (tempChange < -5) {
       insights.push({
         type: 'info',
-        message: `Temperature will drop ${Math.abs(Math.round(tempChange))}°C tomorrow`,
+        message: formatMessage(dict.insights.tempDrop, {
+          value: formatNumber(Math.abs(Math.round(tempChange)), locale),
+        }),
         icon: '🌡',
       });
     } else if (tempChange > 5) {
       insights.push({
         type: 'info',
-        message: `Temperature will rise ${Math.round(tempChange)}°C tomorrow`,
+        message: formatMessage(dict.insights.tempRise, {
+          value: formatNumber(Math.round(tempChange), locale),
+        }),
         icon: '🌡',
       });
     }
@@ -212,7 +248,7 @@ export function generateWeatherInsights(
   if (insights.length === 0) {
     insights.push({
       type: 'info',
-      message: 'No significant weather changes expected',
+      message: dict.insights.noChange,
       icon: '🌤',
     });
   }
@@ -220,38 +256,9 @@ export function generateWeatherInsights(
   return insights.slice(0, 5);
 }
 
-export type HourlyForecastItem = {
-  time: string;
-  timestamp: number;
-  temp: number;
-  pop: number;
-  precipitation: number;
-  icon: string;
-  condition: string;
-  windSpeed: number;
-  windDir: string;
-  humidity: number;
-  clouds: number;
-  uvi: number;
-  pressure: number;
-};
+export type HourlyForecastItem = ReturnType<typeof processHourlyForecast>[number];
 
-export type DailyForecastItem = {
-  date: string;
-  dateShort: string;
-  timestamp: number;
-  tempMax: number;
-  tempMin: number;
-  pop: number;
-  precipitation: number;
-  icon: string;
-  condition: string;
-  windSpeed: number;
-  windDir: string;
-  humidity: number;
-  uvi: number;
-  index?: number;
-};
+export type DailyForecastItem = ReturnType<typeof processDailyForecast>[number];
 
 export type WeatherInsight = {
   type: 'warning' | 'info' | 'success';

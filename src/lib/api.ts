@@ -236,9 +236,9 @@ function transformGeocodingResult(result: any): GeocodingResult {
   };
 }
 
-export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> {
+export async function fetchGeocoding(query: string, language: string = 'en'): Promise<GeocodingResult[]> {
   try {
-    const url = `${GEOCODING_API}?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
+    const url = `${GEOCODING_API}?name=${encodeURIComponent(query)}&count=5&language=${language}&format=json`;
 
     const response = await fetch(url);
 

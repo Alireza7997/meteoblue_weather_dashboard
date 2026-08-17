@@ -18,6 +18,7 @@ import {
 import { useMemo } from 'react';
 import type { HourlyForecastItem, DailyForecastItem } from '@/lib/utils';
 import { useWeatherStore } from '@/lib/store';
+import { useLocale } from '@/hooks/useLocale';
 
 interface WeatherChartsProps {
   hourly: HourlyForecastItem[];
@@ -50,32 +51,34 @@ const tooltipStyle = {
 
 export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsProps) {
   const { selectedHour } = useWeatherStore();
+  const { t, formatNumber } = useLocale();
+
+  const tickFormatter = (v: number) => formatNumber(v);
+  const timeLabel = hourly[selectedHour]?.timeLabel;
+  const minuteZero = formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false });
+  const clockFormatter = (label: unknown) => `${String(label)}:${minuteZero}`;
 
   const temperatureData = useMemo(() => hourly.map((h) => ({
-    time: h.time,
+    time: h.timeLabel,
     temp: h.temp,
-    hour: parseInt(h.time),
   })), [hourly]);
 
   const precipitationData = useMemo(() => hourly.map((h) => ({
-    time: h.time,
+    time: h.timeLabel,
     precipitation: h.precipitation,
     pop: h.pop,
-    hour: parseInt(h.time),
   })), [hourly]);
 
   const windData = useMemo(() => hourly.map((h) => ({
-    time: h.time,
+    time: h.timeLabel,
     speed: h.windSpeed,
     gust: h.windSpeed * 1.5,
-    hour: parseInt(h.time),
   })), [hourly]);
 
   const humidityPressureData = useMemo(() => hourly.map((h) => ({
-    time: h.time,
+    time: h.timeLabel,
     humidity: h.humidity,
     pressure: ((h.pressure || 1013) - 1000).toFixed(2),
-    hour: parseInt(h.time),
   })), [hourly]);
 
   const dailyTempData = useMemo(() => daily.slice(0, 7).map((d) => ({
@@ -86,10 +89,10 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
 
   return (
     <div className="panel">
-      <h3 className="section-title mb-6">Analytics</h3>
+      <h3 className="section-title mb-6">{t.charts.title}</h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ChartCard title="Temperature" subtitle="Hourly & Daily" icon="🌡">
+        <ChartCard title={t.charts.tempTitle} subtitle={t.charts.tempSub} icon="🌡">
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart
               data={temperatureData}
@@ -115,12 +118,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}°`}
+                tickFormatter={tickFormatter}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(value: number) => [`${value}°C`, 'Temperature']}
-                labelFormatter={(label) => `${label}:00`}
+                formatter={(value: number) => [`${formatNumber(value)}°C`, t.charts.series.temperature]}
+                labelFormatter={clockFormatter}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 10 }}
@@ -130,7 +133,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               <Line
                 type="monotone"
                 dataKey="temp"
-                name="Temperature"
+                name={t.charts.series.temperature}
                 stroke={CHART_COLORS.temp}
                 strokeWidth={2}
                 dot={false}
@@ -138,7 +141,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeLinecap="round"
               />
               <ReferenceLine
-                x={selectedHour.toString()}
+                x={timeLabel}
                 stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -147,7 +150,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Precipitation" subtitle="Probability & Amount" icon="🌧">
+        <ChartCard title={t.charts.precipTitle} subtitle={t.charts.precipSub} icon="🌧">
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart
               data={precipitationData}
@@ -175,7 +178,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v) => `${formatNumber(v)}%`}
                 domain={[0, 100]}
               />
               <YAxis
@@ -185,12 +188,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}mm`}
+                tickFormatter={(v) => `${formatNumber(v)}mm`}
                 domain={[0, 'auto']}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                labelFormatter={(label) => `${label}:00`}
+                labelFormatter={clockFormatter}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 10 }}
@@ -200,7 +203,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               <Bar
                 yAxisId="left"
                 dataKey="pop"
-                name="Probability"
+                name={t.charts.series.probability}
                 fill={CHART_COLORS.pop}
                 fillOpacity={0.6}
                 radius={[4, 4, 0, 0]}
@@ -210,7 +213,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 yAxisId="right"
                 type="monotone"
                 dataKey="precipitation"
-                name="Amount (mm)"
+                name={t.charts.series.amount}
                 stroke={CHART_COLORS.precipitation}
                 strokeWidth={2}
                 fill="url(#precipGradient)"
@@ -218,7 +221,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               />
               <ReferenceLine
                 yAxisId="left"
-                x={selectedHour.toString()}
+                x={timeLabel}
                 stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -227,7 +230,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Wind" subtitle="Speed & Gusts" icon="💨">
+        <ChartCard title={t.charts.windTitle} subtitle={t.charts.windSub} icon="💨">
           <ResponsiveContainer width="100%" height={280}>
             <ComposedChart
               data={windData}
@@ -253,12 +256,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v} km/h`}
+                tickFormatter={(v) => `${formatNumber(v)} ${t.units.kmh}`}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(value: number) => [`${value} km/h`, 'Wind']}
-                labelFormatter={(label) => `${label}:00`}
+                formatter={(value: number) => [`${formatNumber(value)} ${t.units.kmh}`, t.charts.series.speed]}
+                labelFormatter={clockFormatter}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 10 }}
@@ -268,7 +271,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               <Area
                 type="monotone"
                 dataKey="speed"
-                name="Speed"
+                name={t.charts.series.speed}
                 stroke={CHART_COLORS.wind}
                 strokeWidth={2}
                 fill="url(#windGradient)"
@@ -277,7 +280,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               <Line
                 type="monotone"
                 dataKey="gust"
-                name="Gusts"
+                name={t.charts.series.gusts}
                 stroke={CHART_COLORS.gust}
                 strokeWidth={2}
                 strokeDasharray="5 5"
@@ -286,7 +289,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 strokeLinecap="round"
               />
               <ReferenceLine
-                x={selectedHour.toString()}
+                x={timeLabel}
                 stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -297,7 +300,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <ChartCard title="Humidity & Pressure" subtitle="Trends" icon="💧">
+        <ChartCard title={t.charts.hpTitle} subtitle={t.charts.hpSub} icon="💧">
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart
               data={humidityPressureData}
@@ -319,7 +322,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}%`}
+                tickFormatter={(v) => `${formatNumber(v)}%`}
                 domain={[0, 100]}
               />
               <YAxis
@@ -329,12 +332,12 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v + 1000}hPa`}
+                tickFormatter={(v) => `${formatNumber(v + 1000)}hPa`}
                 domain={[0, 50]}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                labelFormatter={(label) => `${label}:00`}
+                labelFormatter={clockFormatter}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 10 }}
@@ -345,7 +348,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 yAxisId="left"
                 type="monotone"
                 dataKey="humidity"
-                name="Humidity"
+                name={t.charts.series.humidity}
                 stroke={CHART_COLORS.humidity}
                 strokeWidth={2}
                 dot={false}
@@ -356,7 +359,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 yAxisId="right"
                 type="monotone"
                 dataKey="pressure"
-                name="Pressure"
+                name={t.charts.series.pressure}
                 stroke={CHART_COLORS.pressure}
                 strokeWidth={2}
                 strokeDasharray="5 5"
@@ -366,7 +369,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               />
               <ReferenceLine
                 yAxisId="left"
-                x={selectedHour.toString()}
+                x={timeLabel}
                 stroke="rgba(6, 214, 160, 0.3)"
                 strokeWidth={1}
                 strokeDasharray="3 3"
@@ -375,7 +378,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Daily High/Low" subtitle="7-Day Outlook" icon="📊">
+        <ChartCard title={t.charts.dailyTitle} subtitle={t.charts.dailySub} icon="📊">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={dailyTempData}
@@ -389,7 +392,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `${v}°`}
+                tickFormatter={(v) => `${formatNumber(v)}°`}
               />
               <YAxis
                 type="category"
@@ -398,11 +401,11 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                width={50}
+                width={70}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
-                formatter={(value: number) => [`${value}°C`, 'Temperature']}
+                formatter={(value: number) => [`${formatNumber(value)}°C`, t.charts.series.temperature]}
               />
               <Legend
                 wrapperStyle={{ paddingTop: 10 }}
@@ -411,7 +414,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               />
               <Bar
                 dataKey="max"
-                name="High"
+                name={t.charts.series.high}
                 fill={CHART_COLORS.temp}
                 fillOpacity={0.6}
                 radius={[0, 4, 4, 0]}
@@ -423,7 +426,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
               </Bar>
               <Bar
                 dataKey="min"
-                name="Low"
+                name={t.charts.series.low}
                 fill={CHART_COLORS.precipitation}
                 fillOpacity={0.4}
                 radius={[0, 4, 4, 0]}
