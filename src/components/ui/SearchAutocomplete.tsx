@@ -147,7 +147,7 @@ export function SearchAutocomplete({
       {isOpen && results.length > 0 && (
         <ul
           ref={listRef}
-          className="absolute top-full left-0 right-0 mt-2 glass-strong rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50 animate-fade-in max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in max-h-96 overflow-y-auto"
           role="listbox"
         >
           {results.map((result, index) => (
@@ -178,7 +178,7 @@ export function SearchAutocomplete({
       )}
 
       {(isLoading || isOpen) && results.length === 0 && query.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-2 glass-strong rounded-xl shadow-2xl border border-white/10 p-6 text-center animate-fade-in">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-white/10 rounded-xl shadow-2xl p-6 text-center animate-fade-in">
           <Loader2 className="w-6 h-6 text-cyan-400 animate-spin mx-auto mb-2" />
           <p className="text-sm text-slate-300">Searching...</p>
         </div>

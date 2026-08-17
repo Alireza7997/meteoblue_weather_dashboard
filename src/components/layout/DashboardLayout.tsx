@@ -79,7 +79,7 @@ export function DashboardLayout() {
     <div className="min-h-screen bg-(--background) flex flex-col relative">
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
 
-      <div className="relative z-10 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
+      <div className="relative z-30 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
         <SearchBar
           onSelect={handleSearchSelect}
           onUseCurrentLocation={handleUseCurrentLocation}

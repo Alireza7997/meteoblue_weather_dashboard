@@ -4,7 +4,7 @@ import { getMockHistoricalData } from './constants';
 // meteoblue API Configuration
 const METEOBLUE_BASE = 'https://my.meteoblue.com';
 const METEOBLUE_FORECAST = `${METEOBLUE_BASE}/packages/basic-1h`;
-const METEOBLUE_LOCATION = `${METEOBLUE_BASE}/geocoding/v1/search`;
+const GEOCODING_API = 'https://geocoding-api.open-meteo.com/v1/search';
 
 // Security: Use environment variables
 const API_KEY = process.env.NEXT_PUBLIC_METEOBLUE_API_KEY;
@@ -238,7 +238,7 @@ function transformGeocodingResult(result: any): GeocodingResult {
 
 export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> {
   try {
-    const url = `${METEOBLUE_LOCATION}?q=${encodeURIComponent(query)}&count=5&language=en&format=json&apikey=${getApiKey()}`;
+    const url = `${GEOCODING_API}?name=${encodeURIComponent(query)}&count=5&language=en&format=json`;
 
     const response = await fetch(url);
 
@@ -247,7 +247,7 @@ export async function fetchGeocoding(query: string): Promise<GeocodingResult[]> 
     }
 
     const data = await response.json();
-    const results = data.results || data || [];
+    const results = data.results || [];
     const resultsArray = Array.isArray(results) ? results : [results];
 
     return resultsArray.map(transformGeocodingResult);
