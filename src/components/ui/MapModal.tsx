@@ -15,16 +15,17 @@ export function MapModal({ selectedLocation, onLocationSelect, onClose }: MapMod
 
   useScrollLock({locked: true})
   return (
-    <div className="fixed z-50 w-screen h-screen flex items-center justify-center p-4 md:p-8">
+    <div className="fixed z-50 w-screen h-screen flex items-center justify-center p-3 sm:p-8">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-5xl h-[70vh] glass-strong rounded-2xl overflow-hidden shadow-2xl animate-bounce-in">
-        <div className="absolute -top-16 right-4 z-10">
+      <div className="relative w-full max-w-full sm:max-w-5xl h-[60vh] sm:h-[70vh] glass-strong rounded-2xl overflow-hidden shadow-2xl animate-bounce-in">
+        <div className="absolute top-3 right-3 z-10">
           <button
             onClick={onClose}
-            className="btn-icon"
+            className="btn-icon bg-slate-900/70 backdrop-blur-md"
+            aria-label="Close map"
           >
             <X className="w-5 h-5" />
           </button>

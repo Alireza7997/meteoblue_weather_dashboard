@@ -22,8 +22,8 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
 
   return (
     <div className="panel">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="section-title">Hourly Forecast</h3>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <h3 className="section-title mb-0">Hourly Forecast</h3>
         <div className="text-sm text-slate-300">Next 24 hours</div>
       </div>
 
@@ -47,13 +47,13 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
         <div className="text-xs text-slate-300">
           Selected: {selectedHour}:00
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
           <span>Now</span>
-          <div className="w-32 h-1 bg-slate-700 rounded-full relative overflow-hidden">
+          <div className="w-20 sm:w-32 h-1 bg-slate-700 rounded-full relative overflow-hidden">
             <div
               className="absolute top-0 left-0 h-full bg-cyan-400 rounded-full transition-all duration-300"
               style={{

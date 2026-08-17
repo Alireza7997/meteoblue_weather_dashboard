@@ -347,6 +347,12 @@
   font-family: inherit !important;
 }
 
+@media (max-width: 640px) {
+  .maplibregl-ctrl-top-right {
+    display: none;
+  }
+}
+
 .maplibregl-popup-content {
   background-color: rgb(13 21 37 / 0.95);
   backdrop-filter: blur(16px);
@@ -485,14 +491,21 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 0.75rem;
     background-color: rgb(255 255 255 / 0.05);
     border: 1px solid rgb(255 255 255 / 0.1);
     color: var(--color-muted-foreground);
     transition: all 0.2s;
     outline: none;
+    flex-shrink: 0;
+  }
+  @media (min-width: 640px) {
+    .btn-icon {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
   }
   .btn-icon:hover {
     background-color: rgb(255 255 255 / 0.1);
@@ -506,13 +519,19 @@
 
   .input {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.625rem 0.75rem;
     border-radius: 0.75rem;
     background-color: rgb(255 255 255 / 0.05);
     border: 1px solid rgb(255 255 255 / 0.1);
     color: white;
     outline: none;
     transition: all 0.2s;
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    .input {
+      padding: 0.75rem 1rem;
+    }
   }
   .input::placeholder {
     color: rgb(126 141 166);
@@ -528,10 +547,15 @@
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 1rem;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
     transform-style: preserve-3d;
     transition: transform 0.3s ease;
+  }
+  @media (min-width: 640px) {
+    .card {
+      padding: 1.5rem;
+    }
   }
   .card:hover {
     transform: translateZ(8px);
@@ -543,10 +567,15 @@
     backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 1rem;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
     transform-style: preserve-3d;
     transition: transform 0.4s ease, box-shadow 0.4s ease;
+  }
+  @media (min-width: 640px) {
+    .panel {
+      padding: 1.5rem;
+    }
   }
   .panel:hover {
     box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(6,214,160,0.1), inset 0 1px 0 rgba(255,255,255,0.1);

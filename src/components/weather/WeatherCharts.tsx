@@ -1,9 +1,7 @@
 'use client';
 
 import {
-  LineChart,
   Line,
-  AreaChart,
   Area,
   BarChart,
   Bar,
@@ -110,6 +108,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={{ stroke: CHART_COLORS.axis }}
+                minTickGap={24}
               />
               <YAxis
                 stroke={CHART_COLORS.axis}
@@ -167,6 +166,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={{ stroke: CHART_COLORS.axis }}
+                minTickGap={24}
               />
               <YAxis
                 yAxisId="left"
@@ -246,6 +246,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={{ stroke: CHART_COLORS.axis }}
+                minTickGap={24}
               />
               <YAxis
                 stroke={CHART_COLORS.axis}
@@ -309,6 +310,7 @@ export function WeatherCharts({ hourly, daily, timezoneOffset }: WeatherChartsPr
                 tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
                 tickLine={false}
                 axisLine={{ stroke: CHART_COLORS.axis }}
+                minTickGap={24}
               />
               <YAxis
                 yAxisId="left"
@@ -448,17 +450,17 @@ interface ChartCardProps {
 
 function ChartCard({ title, subtitle, icon, children }: ChartCardProps) {
   return (
-    <div className="glass-vibrant rounded-2xl p-6 glow-hover transition-all duration-300">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-          <span className="text-xl">{icon}</span>
+    <div className="glass-vibrant rounded-2xl p-4 sm:p-6 glow-hover transition-all duration-300">
+      <div className="flex items-center gap-3 mb-4 sm:mb-5">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 flex items-center justify-center shrink-0">
+          <span className="text-lg sm:text-xl">{icon}</span>
         </div>
-        <div>
-          <div className="font-semibold text-white">{title}</div>
-          <div className="text-xs text-muted-foreground">{subtitle}</div>
+        <div className="min-w-0">
+          <div className="font-semibold text-white truncate">{title}</div>
+          <div className="text-xs text-muted-foreground truncate">{subtitle}</div>
         </div>
       </div>
-      <div className="h-full">{children}</div>
+      <div className="h-full min-w-0">{children}</div>
     </div>
   );
 }

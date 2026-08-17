@@ -25,20 +25,21 @@ interface StatItemProps {
   color: string;
   delay: number;
   highlight?: boolean;
+  className?: string;
 }
 
-function StatItem({ icon, label, value, color, delay, highlight }: StatItemProps) {
+function StatItem({ icon, label, value, color, delay, highlight, className = '' }: StatItemProps) {
   return (
     <div
-      className="group relative rounded-2xl px-5 py-4 cursor-default animate-fade-in transition-all duration-300 w-42"
+      className={`group relative rounded-2xl cursor-default animate-fade-in transition-all duration-300 w-full min-w-0 ${className}`}
       style={{
         animationDelay: `${delay}ms`,
         transformStyle: 'preserve-3d',
         perspective: '600px',
       }}
     >
-      <div
-        className="relative glass rounded-2xl p-4 h-full transition-all duration-300 group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_30px_var(--glow-color)]"
+        <div
+          className="relative glass rounded-2xl p-3 sm:p-4 h-full transition-all duration-300 group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.4),0_0_30px_var(--glow-color)]"
         style={{
           ['--glow-color' as string]: `${color}30`,
           transformStyle: 'preserve-3d',
@@ -91,15 +92,15 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
     return (
       <div className="relative py-8">
         <div className="animate-pulse-slow">
-          <div className="h-6 w-48 mx-auto bg-white/5 rounded-full mb-8"></div>
-          <div className="h-16 w-40 mx-auto bg-white/5 rounded mb-4"></div>
-          <div className="h-6 w-32 mx-auto bg-white/5 rounded mb-10"></div>
-          <div className="flex gap-3 justify-center">
-            <div className="h-20 w-16 bg-white/5 rounded-xl"></div>
-            <div className="h-20 w-16 bg-white/5 rounded-xl"></div>
-            <div className="h-20 w-16 bg-white/5 rounded-xl"></div>
-            <div className="h-20 w-16 bg-white/5 rounded-xl"></div>
-            <div className="h-20 w-16 bg-white/5 rounded-xl"></div>
+          <div className="h-6 w-48 max-w-full mx-auto bg-white/5 rounded-full mb-8"></div>
+          <div className="h-16 w-40 max-w-full mx-auto bg-white/5 rounded mb-4"></div>
+          <div className="h-6 w-32 max-w-full mx-auto bg-white/5 rounded mb-10"></div>
+          <div className="grid grid-cols-2 sm:flex gap-3 justify-center">
+            <div className="h-20 bg-white/5 rounded-xl"></div>
+            <div className="h-20 bg-white/5 rounded-xl"></div>
+            <div className="h-20 bg-white/5 rounded-xl hidden sm:block sm:w-16"></div>
+            <div className="h-20 bg-white/5 rounded-xl hidden sm:block sm:w-16"></div>
+            <div className="h-20 bg-white/5 rounded-xl hidden sm:block sm:w-16"></div>
           </div>
         </div>
       </div>
@@ -109,27 +110,27 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
   return (
     <div className="relative py-6">
       {/* Location name */}
-      <div className="text-center mb-4 z-10">
-        <div className="inline-block glass rounded-full px-4 py-1.5">
-          <span className="text-sm font-medium text-slate-300">{locationName}</span>
+      <div className="text-center mb-4 z-10 px-2">
+        <div className="inline-block glass rounded-full px-4 py-1.5 max-w-full">
+          <span className="text-sm font-medium text-slate-300 break-words">{locationName}</span>
         </div>
       </div>
 
       {/* Temperature + condition */}
-      <div className="text-center mb-8 z-10" style={{ perspective: '1000px' }}>
+      <div className="text-center mb-6 sm:mb-8 z-10" style={{ perspective: '1000px' }}>
         <div
-          className="text-7xl md:text-8xl font-thin text-white tracking-tighter mb-2 drop-shadow-2xl transition-transform duration-500 hover:scale-105"
+          className="text-6xl sm:text-7xl md:text-8xl font-thin text-white tracking-tighter mb-2 drop-shadow-2xl transition-transform duration-500 hover:scale-105"
           style={{ textShadow: '0 0 60px rgba(255,255,255,0.2), 0 4px 20px rgba(0,0,0,0.5)' }}
         >
           {current.temp}
         </div>
-        <div className="text-xl md:text-2xl text-white/80 drop-shadow-lg" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
+        <div className="text-lg sm:text-xl md:text-2xl text-white/80 drop-shadow-lg px-2" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
           {WEATHER_ICONS[current.icon as keyof typeof WEATHER_ICONS] || '🌤️'} {current.condition}
         </div>
       </div>
 
       {/* Stat items row */}
-      <div className="flex flex-wrap justify-center gap-4 z-10" style={{ perspective: '1000px' }}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 z-10" style={{ perspective: '1000px' }}>
         <StatItem icon="💧" label="Humidity" value={current.humidity} color="#38bdf8" delay={100} />
         <StatItem icon="💨" label="Wind" value={`${current.wind} ${current.windDir}`} color="#a78bfa" delay={150} />
         <StatItem icon="📊" label="Pressure" value={current.pressure} color="#f472b6" delay={200} />
@@ -141,6 +142,7 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
           color={current.uv === 'Low' ? '#4ade80' : current.uv === 'Moderate' ? '#fbbf24' : '#ef4444'}
           delay={300}
           highlight={current.uv === 'High'}
+          className="col-span-2 sm:col-span-1"
         />
       </div>
     </div>

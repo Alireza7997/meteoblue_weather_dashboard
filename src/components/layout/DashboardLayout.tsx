@@ -79,7 +79,7 @@ export function DashboardLayout() {
     <div className="min-h-screen bg-(--background) flex flex-col relative">
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
 
-      <div className="relative z-10 flex flex-col items-center pt-8 pb-4 px-4">
+      <div className="relative z-10 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
         <SearchBar
           onSelect={handleSearchSelect}
           onUseCurrentLocation={handleUseCurrentLocation}
@@ -88,16 +88,15 @@ export function DashboardLayout() {
         />
       </div>
 
-      <main className="relative z-10 flex-1 overflow-y-auto px-4 md:px-6 lg:px-8 pb-8">
-        {/* Gradient overlay to reduce brightness of lower sections */}
+      <main className="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {error && (
-            <div className="glass-strong border border-rose-glow/30 rounded-xl p-4 flex items-center gap-3 animate-slide-up">
+            <div className="glass-strong border border-rose-glow/30 rounded-xl p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3 animate-slide-up">
               <AlertTriangle className="text-rose-glow w-5 h-5 shrink-0" />
-              <p className="text-sm text-rose-300 flex-1">{error}</p>
-              <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1 rounded-lg flex flex-nowrap items-center gap-1">
+              <p className="text-sm text-rose-300 flex-1 basis-full sm:basis-auto">{error}</p>
+              <button onClick={handleRetry} className="btn-secondary text-sm px-3 py-1 rounded-lg flex flex-nowrap items-center gap-1 shrink-0">
                 <RefreshCw className="w-4 h-4 mr-1" />
                 Retry
               </button>
@@ -144,17 +143,16 @@ export function DashboardLayout() {
 
               <AnimatedSection animation="animate-section-left" delay={400}>
                 <section aria-labelledby="weather-map-title" className="relative">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 id="weather-map-title" className="section-title">Weather Map</h2>
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <h2 id="weather-map-title" className="section-title mb-0">Weather Map</h2>
                     <LayerSelector value={mapLayer} onChange={setMapLayer} />
                   </div>
-                  <div className="aspect-video md:aspect-21/9 rounded-2xl overflow-hidden glass-vibrant relative">
+                  <div className="aspect-4/3 sm:aspect-video lg:aspect-21/9 rounded-2xl overflow-hidden glass-vibrant relative">
                     <WeatherVisualizationMap
                       selectedLocation={selectedLocation}
                       weatherData={hourlyForecast}
                       className=""
                     />
-                    {/* Gradient overlay to reduce interactivity feel */}
                     <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent pointer-events-none" />
                   </div>
                 </section>
@@ -163,21 +161,21 @@ export function DashboardLayout() {
           )}
 
           {!selectedLocation && !isLoading && (
-            <div className="glass-vibrant rounded-2xl p-12 text-center animate-fade-in mt-12">
-              <div className="text-6xl mb-4">🌍</div>
-              <h3 className="text-xl font-semibold text-white mb-2">Select a Location</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
+            <div className="glass-vibrant rounded-2xl p-6 sm:p-12 text-center animate-fade-in mt-4 sm:mt-12">
+              <div className="text-4xl sm:text-6xl mb-4">🌍</div>
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Select a Location</h3>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
                 Search for a city, click the map button, or use your current location to begin exploring weather analytics.
               </p>
             </div>
           )}
 
           {selectedLocation && isLoading && (
-            <div className="fixed inset-0 flex items-center justify-center bg-(--background)/80 backdrop-blur-sm z-50">
-              <div className="glass-vibrant rounded-2xl p-8 text-center shadow-2xl animate-bounce-in">
+            <div className="fixed inset-0 flex items-center justify-center bg-(--background)/80 backdrop-blur-sm z-50 px-4">
+              <div className="glass-vibrant rounded-2xl p-6 sm:p-8 text-center shadow-2xl animate-bounce-in w-full max-w-sm">
                 <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
                 <p className="text-white">Loading weather data...</p>
-                <p className="text-sm text-muted-foreground mt-2">{selectedLocation.name}</p>
+                <p className="text-sm text-muted-foreground mt-2 truncate">{selectedLocation.name}</p>
               </div>
             </div>
           )}
@@ -216,8 +214,7 @@ function LayerSelector({ value, onChange }: LayerSelectorProps) {
     <select
       value={value}
       onChange={(e) => onChange(e.target.value as WeatherMapLayer)}
-      className="input py-1.5 px-3 text-sm bg-slate-900/50"
-      style={{ width: 'auto', minWidth: 160 }}
+      className="input py-1.5 px-3 text-sm bg-slate-900/50 w-auto! max-w-full shrink min-w-32 sm:min-w-40"
     >
       {LAYER_OPTIONS.map((option) => (
         <option key={option.value} value={option.value}>

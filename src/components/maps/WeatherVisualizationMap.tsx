@@ -304,20 +304,20 @@ export function WeatherVisualizationMap({
     <div className={`relative w-full h-full rounded-xl overflow-hidden ${className}`}>
       <div ref={mapContainerRef} className="w-full h-full" />
 
-      <div className="absolute top-4 right-4 z-10">
-        <div className="bg-[#233859] backdrop-blur-md rounded-lg p-3 shadow-xl min-w-40 animate-fade-in border border-white/10">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg">{layerConfig.icon}</span>
-            <span className="font-semibold text-white">{layerConfig.label}</span>
+      <div className="hidden min-[500px]:block absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
+        <div className="bg-[#233859] backdrop-blur-md rounded-lg p-2 sm:p-3 shadow-xl min-w-28 sm:min-w-40 max-w-[calc(100%-1rem)] animate-fade-in border border-white/10">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+            <span className="text-base sm:text-lg">{layerConfig.icon}</span>
+            <span className="font-semibold text-white text-xs sm:text-base truncate">{layerConfig.label}</span>
           </div>
           <div className="space-y-1.5">
             {legendColors.map((stop, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs">
+              <div key={index} className="flex items-center gap-2 text-[10px] sm:text-xs">
                 <div
-                  className="w-5 h-3 rounded"
+                  className="w-4 sm:w-5 h-2.5 sm:h-3 rounded shrink-0"
                   style={{ backgroundColor: stop.color }}
                 />
-                <span className="text-slate-300">
+                <span className="text-slate-300 whitespace-nowrap">
                   {index === 0 ? '≤' : index === legendColors.length - 1 ? '≥' : ''}
                   {stop.value}{layerConfig.unit}
                 </span>
@@ -328,10 +328,10 @@ export function WeatherVisualizationMap({
       </div>
 
       {!isMapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-(--background)/90 backdrop-blur-sm z-20">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-300">Loading weather map...</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-(--background)/90 backdrop-blur-sm z-20 p-4">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 text-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm sm:text-base text-slate-300">Loading weather map...</p>
           </div>
         </div>
       )}

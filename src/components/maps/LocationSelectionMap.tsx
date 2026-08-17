@@ -264,9 +264,9 @@ export function LocationSelectionMap({
       )}
 
       {isReverseGeocoding && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 glass-strong rounded-lg px-4 py-2 shadow-xl animate-fade-in">
-          <div className="flex items-center gap-2 text-sm text-slate-300">
-            <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-xs sm:w-auto glass-strong rounded-lg px-4 py-2 shadow-xl animate-fade-in">
+          <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
+            <div className="w-4 h-4 shrink-0 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
             Resolving location...
           </div>
         </div>
