@@ -1,6 +1,6 @@
-# Advanced Weather Analytics Dashboard
+# Meteoblue Weather Dashboard
 
-A professional meteorological dashboard built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4. Features live weather data from Meteoblue, two independent MapLibre maps (location selection + weather visualization), interactive Recharts analytics, animated weather backgrounds, and full **English / Persian (RTL)** internationalization.
+A professional meteorological dashboard built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4. Features live weather data from meteoblue, two independent MapLibre maps (location selection + weather visualization), interactive Recharts analytics, animated weather backgrounds, and full **English / Persian (RTL)** internationalization.
 
 ## Features
 
