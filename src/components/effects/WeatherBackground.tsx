@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
+import { motion, useTransform } from 'framer-motion';
+import { useDashboardScroll } from '@/hooks/useDashboardScroll';
 
 /**
  * WeatherBackground
@@ -324,6 +326,13 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
   const showSun = isClear && timeStage === 'day';
   const showMoon = isClear && (timeStage === 'night' || timeStage === 'evening');
 
+  // Parallax depth: celestial layer lags far behind the scroll (feels
+  // distant), precipitation/clouds lag less (feel nearer). Values are fed
+  // by the springed dashboard scroll progress, so sudden scrolls glide.
+  const { progress } = useDashboardScroll();
+  const celestialY = useTransform(progress, [0, 1], [0, 90]);
+  const particlesY = useTransform(progress, [0, 1], [0, 35]);
+
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
       {/* Standardized Keyframes */}
@@ -344,34 +353,30 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
       {/* Top-to-bottom overlay for reduced contrast */}
       <div className="absolute inset-0" style={{ background: timeColors.overlay }} />
 
-      {/* Night stars (visible on clear nights/evenings) */}
-      {showStars && <NightStars />}
+      {/* Celestial layer (stars / sun / moon) — slowest, most distant */}
+      <motion.div className="absolute inset-0" style={{ y: celestialY }}>
+        {showStars && <NightStars />}
+        {showSun && <SunEffect />}
+        {showMoon && <MoonEffect />}
+      </motion.div>
 
-      {/* Sun effect for clear day */}
-      {showSun && <SunEffect />}
+      {/* Atmospheric particles — nearer layer */}
+      <motion.div className="absolute inset-0" style={{ y: particlesY }}>
+        {weatherType === 'clouds' && <CloudParticles />}
 
-      {/* Moon effect for clear night/evening */}
-      {showMoon && <MoonEffect />}
+        {weatherType === 'rain' && <RainDrops />}
 
-      {/* Cloud particles */}
-      {weatherType === 'clouds' && <CloudParticles />}
+        {weatherType === 'snow' && <SnowParticles />}
 
-      {/* Rain */}
-      {weatherType === 'rain' && <RainDrops />}
+        {weatherType === 'thunderstorm' && (
+          <>
+            <RainDrops />
+            <LightningFlash />
+          </>
+        )}
 
-      {/* Snow */}
-      {weatherType === 'snow' && <SnowParticles />}
-
-      {/* Thunderstorm */}
-      {weatherType === 'thunderstorm' && (
-        <>
-          <RainDrops />
-          <LightningFlash />
-        </>
-      )}
-
-      {/* Fog */}
-      {weatherType === 'fog' && <FogBands />}
+        {weatherType === 'fog' && <FogBands />}
+      </motion.div>
     </div>
   );
 }

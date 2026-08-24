@@ -51,7 +51,7 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
         <div className="text-xs text-slate-300">
-          {t.hourly.selected}: {formatNumber(selectedHour)}:00
+          {t.hourly.selected}: {hourly[selectedHour] ? `${hourly[selectedHour].timeLabel}:00` : '—'}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
           <span>{t.hourly.now}</span>

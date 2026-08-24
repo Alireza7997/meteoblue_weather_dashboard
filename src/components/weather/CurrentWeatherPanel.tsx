@@ -1,7 +1,10 @@
 'use client';
 
+import { useRef } from 'react';
+import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'framer-motion';
 import { WEATHER_ICONS } from '@/lib/constants';
 import { useLocale } from '@/hooks/useLocale';
+import { useDashboardScroll } from '@/hooks/useDashboardScroll';
 import { normalizeUvCategory } from '@/lib/utils';
 
 interface CurrentWeatherPanelProps {
@@ -91,10 +94,33 @@ function StatItem({ icon, label, value, color, delay, highlight, className = '' 
 
 export function CurrentWeatherPanel({ locationName, current, isLoading }: CurrentWeatherPanelProps) {
   const { t } = useLocale();
+  const { containerRef } = useDashboardScroll();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Parallax: track this panel's position within the dashboard scroll
+  // container, then spring it so abrupt scrolls glide instead of snapping.
+  const { scrollYProgress } = useScroll({
+    container: containerRef,
+    target: panelRef,
+    offset: ['start start', 'end start'],
+  });
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
+    mass: 0.4,
+  });
+
+  // Moves slower than the scroll (counter-drift) => sense of depth against
+  // the fixed weather background.
+  const y = useTransform(smoothProgress, [0, 1], ['0%', '-18%']);
+  const scale = useTransform(smoothProgress, [0, 1], [1, 0.94]);
+  const opacity = useTransform(smoothProgress, [0, 0.85], [1, 0]);
+  const blurPx = useTransform(smoothProgress, [0, 1], [0, 6]);
+  const filter = useMotionTemplate`blur(${blurPx}px)`;
 
   if (isLoading || !current) {
     return (
-      <div className="relative py-8">
+      <motion.div ref={panelRef} className="relative py-8" style={{ y, opacity }}>
         <div className="animate-pulse-slow">
           <div className="h-6 w-48 max-w-full mx-auto bg-white/5 rounded-full mb-8"></div>
           <div className="h-16 w-40 max-w-full mx-auto bg-white/5 rounded mb-4"></div>
@@ -107,12 +133,12 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
             <div className="h-20 bg-white/5 rounded-xl hidden sm:block sm:w-16"></div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="relative py-6">
+    <motion.div ref={panelRef} className="relative py-6" style={{ y, scale, opacity, filter }}>
       {/* Location name */}
       <div className="text-center mb-4 z-10 px-2">
         <div className="inline-block glass rounded-full px-4 py-1.5 max-w-full">
@@ -155,6 +181,6 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
           );
         })()}
       </div>
-    </div>
+    </motion.div>
   );
 }

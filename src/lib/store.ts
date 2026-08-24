@@ -18,7 +18,7 @@ interface WeatherStore extends WeatherState {
 const initialState: WeatherState = {
   selectedLocation: DEFAULT_LOCATION,
   selectedDate: new Date().toISOString().split('T')[0],
-  selectedHour: new Date().getHours(),
+  selectedHour: 0,
   mapLayer: 'temperature',
   isLoading: false,
   error: null,

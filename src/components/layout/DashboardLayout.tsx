@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useScroll, useSpring } from 'framer-motion';
+import { DashboardScrollProvider } from '@/hooks/useDashboardScroll';
 import { WeatherVisualizationMap } from '@/components/maps/WeatherVisualizationMap';
 import { CurrentWeatherPanel } from '@/components/weather/CurrentWeatherPanel';
 import { HourlyForecast } from '@/components/weather/HourlyForecast';
@@ -57,6 +59,16 @@ export function DashboardLayout() {
   const { getCurrentLocation, isLoading: isGeoLoading } = useGeolocation();
   const { t } = useLocale();
   const [geoError, setGeoError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLElement>(null);
+
+  // Single source of truth for scroll-driven parallax: springed so even
+  // sudden flicks of the scrollbar ease out smoothly instead of jumping.
+  const { scrollYProgress } = useScroll({ container: scrollContainerRef });
+  const smoothScrollProgress = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
+    mass: 0.4,
+  });
 
   const {
     weatherData,
@@ -89,6 +101,9 @@ export function DashboardLayout() {
   const locationName = formatLocationName(selectedLocation, t.dashboard.currentLocation);
 
   return (
+    <DashboardScrollProvider
+      value={{ progress: smoothScrollProgress, containerRef: scrollContainerRef }}
+    >
     <div className="min-h-screen bg-(--background) flex flex-col relative">
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
 
@@ -101,7 +116,7 @@ export function DashboardLayout() {
         />
       </div>
 
-      <main className="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
+      <main ref={scrollContainerRef} className="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
@@ -205,6 +220,7 @@ export function DashboardLayout() {
         </Portal>
       )}
     </div>
+    </DashboardScrollProvider>
   );
 }
 

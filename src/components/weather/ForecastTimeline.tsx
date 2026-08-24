@@ -49,12 +49,10 @@ export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
                 className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-lg transition-all duration-200 min-w-12.5 ${
                   index === selectedHour
                     ? 'glass-strong ring-2 ring-cyan-400/50'
-                    : index === currentHour
-                    ? 'glass ring-1 ring-emerald-400/50'
                     : 'glass hover:bg-white/5'
                 }`}
               >
-                <span className={`text-xs font-medium ${index === currentHour ? 'text-emerald-400' : 'text-slate-300'}`} dir="ltr">
+                <span className="text-xs font-medium text-slate-300" dir="ltr">
                   {formatNumber(parseInt(h.time, 10))}:{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
                 </span>
                 <span className="text-lg">{index === selectedHour ? '●' : '○'}</span>
