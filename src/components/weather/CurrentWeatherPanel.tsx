@@ -110,8 +110,6 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
     mass: 0.4,
   });
 
-  // Moves slower than the scroll (counter-drift) => sense of depth against
-  // the fixed weather background.
   const y = useTransform(smoothProgress, [0, 1], ['0%', '-18%']);
   const scale = useTransform(smoothProgress, [0, 1], [1, 0.94]);
   const opacity = useTransform(smoothProgress, [0, 0.85], [1, 0]);

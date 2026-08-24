@@ -4,14 +4,6 @@ import { useMemo } from 'react';
 import { motion, useTransform } from 'framer-motion';
 import { useDashboardScroll } from '@/hooks/useDashboardScroll';
 
-/**
- * WeatherBackground
- * 
- * A premium, animated background component for weather forecasting apps.
- * Dynamically renders atmospheric effects (rain, snow, clouds, etc.) 
- * and time-of-day gradients based on current conditions.
- */
-
 type WeatherEffect = 'rain' | 'snow' | 'clouds' | 'clear' | 'thunderstorm' | 'fog';
 type TimeStage = 'day' | 'evening' | 'night';
 
@@ -62,50 +54,106 @@ function getTimeColors(stage: TimeStage): { bg: string; overlay: string } {
 // --- Visual Effect Components ---
 
 function SunEffect() {
+  // Zero-size anchor at the sun's center; each layer centers itself on it
+  const anchorStyle: React.CSSProperties = {
+    width: 0,
+    height: 0,
+    opacity: 0.87,
+  };
+
   return (
-    <div className="absolute top-0 left-0 right-0 h-[350px] pointer-events-none">
-      <div
-        className="absolute top-[-100px] right-[10%] w-[300px] h-[300px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(251,191,36,0.6) 0%, rgba(251,191,36,0.2) 30%, rgba(251,191,36,0.05) 60%, transparent 80%)',
-          filter: 'blur(4px)',
-          animation: 'sunPulse 8s ease-in-out infinite',
-        }}
-      />
-      <div
-        className="absolute top-[-50px] right-[calc(10%+50px)] w-[150px] h-[150px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(255,220,100,0.8) 0%, rgba(255,200,50,0.4) 40%, transparent 70%)',
-          filter: 'blur(2px)',
-        }}
-      />
+    <div className="absolute top-0 left-0 right-0 h-87.5 pointer-events-none">
+      <div className="absolute sun-anchor" style={anchorStyle}>
+        {/* Wide corona haze */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '450px',
+            height: '450px',
+            left: '-225px',
+            top: '-225px',
+            background: 'radial-gradient(circle, rgba(255,190,70,0.28) 0%, rgba(255,160,40,0.1) 45%, transparent 72%)',
+            filter: 'blur(12px)',
+            animation: 'sunBreathe 9s ease-in-out infinite',
+          }}
+        />
+        {/* Slowly rotating ray beams */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '360px',
+            height: '360px',
+            left: '-180px',
+            top: '-180px',
+            background: 'repeating-conic-gradient(from 0deg, rgba(255,214,110,0.35) 0deg 5deg, transparent 9deg 24deg)',
+            maskImage: 'radial-gradient(circle, black 18%, rgba(0,0,0,0.35) 48%, transparent 68%)',
+            WebkitMaskImage: 'radial-gradient(circle, black 18%, rgba(0,0,0,0.35) 48%, transparent 68%)',
+            filter: 'blur(3px)',
+            animation: 'sunSpin 90s linear infinite',
+          }}
+        />
+        {/* Inner hot glow */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '230px',
+            height: '230px',
+            left: '-115px',
+            top: '-115px',
+            background: 'radial-gradient(circle, rgba(255,240,180,0.85) 0%, rgba(255,205,80,0.5) 40%, transparent 70%)',
+            filter: 'blur(6px)',
+            animation: 'sunBreathe 9s ease-in-out infinite reverse',
+          }}
+        />
+        {/* Solar disc */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '130px',
+            height: '130px',
+            left: '-65px',
+            top: '-65px',
+            background: 'radial-gradient(circle at 38% 34%, #fffdf0 0%, #ffefad 30%, #ffd24d 62%, #ffb62e 88%, #ff9e1f 100%)',
+            boxShadow:
+              '0 0 25px rgba(255,215,90,0.95), 0 0 60px rgba(255,180,50,0.6), 0 0 120px rgba(255,160,30,0.3)',
+            animation: 'sunBreathe 9s ease-in-out infinite',
+          }}
+        />
+      </div>
     </div>
   );
 }
 
 function MoonEffect() {
+  // Zero-size anchor at the moon's center; each layer centers itself on it
   return (
-    <div className="absolute top-0 right-0 w-[350px] h-[350px] pointer-events-none">
-      {/* Moon Glow */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          top: '20px',
-          right: 'calc(15% - 20px)',
-          width: '140px',
-          height: '140px',
-          background: 'radial-gradient(circle, rgba(200,220,255,0.2) 0%, transparent 70%)',
-          filter: 'blur(15px)',
-        }}
-      />
-      {/* Moon Body */}
-      <div
-        className="absolute top-[40px] right-[15%] w-[90px] h-[90px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(200,220,240,0.8) 40%, rgba(150,170,200,0.4) 70%, transparent 85%)',
-          boxShadow: '0 0 30px rgba(200,220,255,0.4), 0 0 60px rgba(200,220,255,0.2)',
-        }}
-      />
+    <div className="absolute top-0 left-0 right-0 pointer-events-none">
+      <div className="absolute moon-anchor" style={{ width: 0, height: 0 }}>
+        {/* Moon Glow */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '140px',
+            height: '140px',
+            left: '-70px',
+            top: '-70px',
+            background: 'radial-gradient(circle, rgba(200,220,255,0.2) 0%, transparent 70%)',
+            filter: 'blur(15px)',
+          }}
+        />
+        {/* Moon Body */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            width: '90px',
+            height: '90px',
+            left: '-45px',
+            top: '-45px',
+            background: 'radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95) 0%, rgba(200,220,240,0.8) 40%, rgba(150,170,200,0.4) 70%, transparent 85%)',
+            boxShadow: '0 0 30px rgba(200,220,255,0.4), 0 0 60px rgba(200,220,255,0.2)',
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -153,7 +201,7 @@ function NightStars() {
       {shootingStars.map((star) => (
         <div
           key={star.id}
-          className="absolute h-[2px] w-[100px] bg-gradient-to-r from-white to-transparent rounded-full"
+          className="absolute h-0.5 w-25 bg-linear-to-r from-white to-transparent rounded-full"
           style={{
             top: star.top,
             left: star.left,
@@ -168,7 +216,6 @@ function NightStars() {
 }
 
 function RainDrops() {
-  // Reverted to the original raindrop style
   const drops = useMemo(() =>
     Array.from({ length: 80 }, (_, i) => ({
       id: i,
@@ -186,7 +233,7 @@ function RainDrops() {
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="absolute w-[1px] bg-gradient-to-b from-transparent via-cyan-400/40 to-cyan-400/20"
+          className="absolute w-px bg-linear-to-b from-transparent via-cyan-400/40 to-cyan-400/20"
           style={{
             left: drop.left,
             top: '-15px',
@@ -236,17 +283,16 @@ function SnowParticles() {
 }
 
 function CloudParticles() {
-  // Enhanced for much higher visibility, scale, and softness
   const clouds = useMemo(() =>
     Array.from({ length: 6 }, (_, i) => ({
       id: i,
-      width: 350 + Math.random() * 300, // Much larger clouds
+      width: 350 + Math.random() * 300, // large clouds
       height: 120 + Math.random() * 80,
       top: `${Math.random() * 40}%`, // Spread around the top 40%
       left: `${-20 + Math.random() * 20}%`, 
-      animationDuration: `${40 + Math.random() * 20}s`, // Slower, more majestic drift
+      animationDuration: `${40 + Math.random() * 20}s`, // Slower drift
       animationDelay: `${i * 5}s`,
-      opacity: 0.15 + Math.random() * 0.2, // Dramatically increased from 0.03
+      opacity: 0.15 + Math.random() * 0.2,
     })),
     []
   );
@@ -264,7 +310,7 @@ function CloudParticles() {
             left: cloud.left,
             animation: `cloudDrift ${cloud.animationDuration} linear ${cloud.animationDelay} infinite`,
             opacity: cloud.opacity,
-            filter: 'blur(50px)', // Heavy blur to look like real atmospheric clouds
+            filter: 'blur(50px)', 
           }}
         />
       ))}
@@ -298,7 +344,7 @@ function FogBands() {
       {bands.map((band) => (
         <div
           key={band.id}
-          className="absolute left-0 right-0 h-[250px] bg-gradient-to-b from-transparent via-white/20 to-transparent"
+          className="absolute left-0 right-0 h-62.5 bg-linear-to-b from-transparent via-white/20 to-transparent"
           style={{
             top: band.top,
             animation: `fogDrift ${band.animationDuration} ease-in-out ${band.animationDelay} infinite`,
@@ -314,7 +360,6 @@ function FogBands() {
 // --- Main Component ---
 
 export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
-  // Hydration-safe default hour calculation
   const currentHour = hour ?? (typeof window !== 'undefined' ? new Date().getHours() : 12);
   
   const weatherType = getWeatherType(condition);
@@ -326,18 +371,20 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
   const showSun = isClear && timeStage === 'day';
   const showMoon = isClear && (timeStage === 'night' || timeStage === 'evening');
 
-  // Parallax depth: celestial layer lags far behind the scroll (feels
-  // distant), precipitation/clouds lag less (feel nearer). Values are fed
-  // by the springed dashboard scroll progress, so sudden scrolls glide.
   const { progress } = useDashboardScroll();
   const celestialY = useTransform(progress, [0, 1], [0, 90]);
   const particlesY = useTransform(progress, [0, 1], [0, 35]);
 
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-      {/* Standardized Keyframes */}
       <style>{`
-        @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } }
+        .sun-anchor { top: 50px; right: calc(10% + 150px); }
+        .moon-anchor { top: 85px; right: calc(15% + 45px); }
+        @media (max-width: 640px) {
+          .sun-anchor, .moon-anchor { right: auto; left: 50%; }
+        }
+        @keyframes sunBreathe { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
+        @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes twinkle { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
         @keyframes shootingStar { 0% { transform: rotate(-35deg) translateX(0); opacity: 0; } 5% { opacity: 1; } 15% { transform: rotate(-35deg) translateX(-400px); opacity: 0; } 100% { opacity: 0; } }
         @keyframes rainfall { 0% { transform: translateY(-15px); } 100% { transform: translateY(100vh); } }

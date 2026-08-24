@@ -140,7 +140,7 @@ export function LocationSelectionMap({
           );
         }
       } else {
-        // Fallback if reverse geocoding fails.
+        // if reverse geocoding fails.
         onLocationSelect({
           latitude: lat,
           longitude: lng,

@@ -61,8 +61,6 @@ export function DashboardLayout() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLElement>(null);
 
-  // Single source of truth for scroll-driven parallax: springed so even
-  // sudden flicks of the scrollbar ease out smoothly instead of jumping.
   const { scrollYProgress } = useScroll({ container: scrollContainerRef });
   const smoothScrollProgress = useSpring(scrollYProgress, {
     stiffness: 120,
@@ -119,7 +117,7 @@ export function DashboardLayout() {
       <main ref={scrollContainerRef} className="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 mt-36 sm:mt-0">
           {(error || geoError) && (
             <div className="glass-strong border border-rose-glow/30 rounded-xl p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3 animate-slide-up">
               <AlertTriangle className="text-rose-glow w-5 h-5 shrink-0" />
