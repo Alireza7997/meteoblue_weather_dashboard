@@ -1,0 +1,15 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_METEOBLUE_API_KEY: ${NEXT_PUBLIC_METEOBLUE_API_KEY:-}
+    image: meteoblue-weather-dashboard
+    container_name: meteoblue-weather-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - METEOBLUE_SHARED_SECRET=${METEOBLUE_SHARED_SECRET:-}
+      - NODE_ENV=production
+    restart: unless-stopped
