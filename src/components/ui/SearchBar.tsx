@@ -18,9 +18,9 @@ export function SearchBar({ onSelect, onUseCurrentLocation, onOpenMap, isLoading
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <SearchAutocomplete onSelect={onSelect} placeholder={t.search.placeholder} />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="max-sm:flex sm:flex-1 max-sm:w-full">
+          <SearchAutocomplete onSelect={onSelect} placeholder={t.search.placeholder} className='max-sm:w-full'/>
         </div>
         <button
           onClick={onOpenMap}
