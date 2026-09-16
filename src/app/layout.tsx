@@ -1,12 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
-import { Vazirmatn } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic"],
-  variable: "--font-vazirmatn",
+const vazirmatn = localFont({
+  src: '../../public/fonts/variable/Vazirmatn[wght].ttf',
+  variable: '--font-vazirmatn',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
