@@ -106,6 +106,7 @@ export function DashboardLayout() {
       <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
 
       <div className="relative z-30 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
+        <h1 className="sr-only">{t.dashboard.pageHeading}</h1>
         <SearchBar
           onSelect={handleSearchSelect}
           onUseCurrentLocation={handleUseCurrentLocation}

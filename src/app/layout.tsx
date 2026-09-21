@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import localFont from "next/font/local";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const vazirmatn = localFont({
   src: '../../public/fonts/variable/Vazirmatn[wght].ttf',
@@ -10,24 +11,103 @@ const vazirmatn = localFont({
   display: 'swap',
 });
 
+const googleVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+
 export const metadata: Metadata = {
-  title: "Advanced Weather Analytics Dashboard",
-  description:
-    "Professional meteorological dashboard with interactive maps, forecasts, and analytics",
-  keywords: [
-    "weather",
-    "analytics",
-    "dashboard",
-    "forecast",
-    "meteorology",
-    "maps",
-  ],
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  title: {
+    default: 'Iran Weather Forecast | Tehran, Mashhad, Isfahan, Shiraz & More',
+    template: '%s | Iran Weather Forecast',
+  },
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  category: 'weather',
+  alternates: {
+    canonical: '/',
+    languages: {
+      en: '/',
+      fa: '/?lang=fa',
+    },
+  },
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: 'Iran Weather Forecast | پیش‌بینی آب‌وهوای ایران',
+    description: SITE_DESCRIPTION,
+    url: '/',
+    locale: 'en_US',
+    alternateLocale: ['fa_IR'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Iran Weather Forecast | پیش‌بینی آب‌وهوای ایران',
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  manifest: '/manifest.webmanifest',
+  ...(googleVerification ? { verification: { google: googleVerification } } : {}),
+  other: {
+    'geo.region': 'IR',
+    'geo.placename': 'Iran',
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0a0f1a",
   width: "device-width",
   initialScale: 1,
+  colorScheme: 'dark',
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE_NAME,
+  alternateName: 'پیش‌بینی آب‌وهوای ایران',
+  url: `${SITE_URL}/`,
+  description: SITE_DESCRIPTION,
+  inLanguage: ['en', 'fa'],
+};
+
+const appJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: SITE_NAME,
+  url: `${SITE_URL}/`,
+  applicationCategory: 'WeatherApplication',
+  operatingSystem: 'Any',
+  browserRequirements: 'Requires JavaScript. Requires HTML5.',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  featureList: [
+    'Hourly weather forecast',
+    '7-day weather forecast',
+    'Interactive weather maps',
+    'Weather analytics and charts',
+    'English and Persian (Farsi) interface',
+  ],
 };
 
 export default function RootLayout({
@@ -40,8 +120,18 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var l=localStorage.getItem('weather-locale');if(l==='fa'){document.documentElement.lang='fa';document.documentElement.dir='rtl'}}catch(e){}})()`,
+            // ?lang=fa|en takes precedence so localized URLs (hreflang)
+            // open with the right language; otherwise use stored locale.
+            __html: `(function(){try{var m=location.search.match(/[?&]lang=(en|fa)\\b/);var l=m?m[1]:localStorage.getItem('weather-locale');if(m){try{localStorage.setItem('weather-locale',l)}catch(e){}}if(l==='fa'){document.documentElement.lang='fa';document.documentElement.dir='rtl'}}catch(e){}})()`,
           }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }}
         />
       </head>
       <body

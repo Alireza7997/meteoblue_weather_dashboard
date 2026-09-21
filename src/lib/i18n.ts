@@ -14,6 +14,16 @@ export function normalizeLocale(value: unknown): Locale {
 export function readStoredLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
   try {
+    // ?lang=fa|en takes precedence so localized URLs (hreflang) work.
+    const param = new URLSearchParams(window.location.search).get('lang');
+    if (param === 'en' || param === 'fa') {
+      try {
+        window.localStorage.setItem(LOCALE_STORAGE_KEY, param);
+      } catch {
+        // localStorage unavailable
+      }
+      return param;
+    }
     return normalizeLocale(window.localStorage.getItem(LOCALE_STORAGE_KEY));
   } catch {
     return DEFAULT_LOCALE;
@@ -56,6 +66,7 @@ const en = {
     closeMap: 'Close map',
   },
   dashboard: {
+    pageHeading: 'Iran Weather Forecast – Hourly and 7-Day Forecasts for Tehran and Every City',
     selectLocationTitle: 'Select a Location',
     selectLocationDesc:
       'Search for a city, click the map button, or use your current location to begin exploring weather analytics.',
@@ -174,6 +185,7 @@ const fa: Messages = {
     closeMap: 'بستن نقشه',
   },
   dashboard: {
+    pageHeading: 'پیش‌بینی آب‌وهوای ایران – پیش‌بینی ساعتی و ۷ روزه تهران و همه شهرها',
     selectLocationTitle: 'انتخاب یک مکان',
     selectLocationDesc:
       'شهری را جستجو کنید، روی دکمه نقشه بزنید، یا از موقعیت فعلی خود برای شروع تحلیل آب‌وهوا استفاده کنید.',
