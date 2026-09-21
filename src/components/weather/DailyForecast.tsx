@@ -47,7 +47,7 @@ function DailyCard({ day, index, isSelected, onClick }: DailyCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex flex-wrap items-center gap-x-3 gap-y-2 p-3 rounded-lg transition-all duration-200 text-start ${
+      className={`w-full flex flex-wrap items-center gap-x-3 gap-y-1.5 p-3 rounded-lg transition-all duration-200 text-start ${
         isSelected
           ? 'glass-strong ring-1 ring-cyan-400/30'
           : 'glass hover:bg-white/5'
@@ -60,22 +60,26 @@ function DailyCard({ day, index, isSelected, onClick }: DailyCardProps) {
 
       <div className="text-2xl sm:text-3xl shrink-0">{day.icon}</div>
 
-      <div className="flex-1 min-w-0 basis-32 sm:basis-0">
-        <div className="text-xs sm:text-sm text-slate-300 truncate">{day.condition}</div>
-        <div className="flex flex-wrap items-center gap-x-3 sm:gap-4 gap-y-0.5 text-xs text-slate-300 mt-1">
-          <span>💧 {formatNumber(day.humidity)}%</span>
-          <span className="hidden sm:inline">💨 {formatNumber(day.windSpeed)} {t.units.kmh} {day.windDir}</span>
-          <span className="sm:hidden">💨 {formatNumber(day.windSpeed)} {t.units.kmh}</span>
-          <span className={day.uvi < 3 ? 'text-green-400' : day.uvi < 6 ? 'text-amber-400' : 'text-red-400'}>🔆 UV {uvLabel}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 sm:gap-3 text-end ms-auto shrink-0">
+      {/* Below 520px the temps sit on the first row, pushed to the edge;
+          at 520px+ they return to the normal inline position. */}
+      <div className="flex items-center gap-2 sm:gap-3 text-end ms-auto shrink-0 order-1 min-[520px]:order-2">
         <div className="text-base sm:text-lg font-bold text-white whitespace-nowrap">
           {formatNumber(day.tempMax)}° / {formatNumber(day.tempMin)}°
         </div>
         <div className="text-xs sm:text-sm text-slate-300 w-12 sm:w-16 text-end whitespace-nowrap">
           {formatNumber(day.pop)}% 🌧
+        </div>
+      </div>
+
+      {/* Below 520px the condition + details take a full-width second row;
+          at 520px+ they sit inline again. */}
+      <div className="min-w-0 order-2 basis-full min-[520px]:order-1 min-[520px]:basis-32 min-[520px]:flex-1 sm:basis-0">
+        <div className="text-xs sm:text-sm text-slate-300 truncate">{day.condition}</div>
+        <div className="flex flex-wrap items-center gap-x-2 min-[520px]:gap-x-3 sm:gap-4 gap-y-0.5 text-xs text-slate-300 mt-1">
+          <span>💧 {formatNumber(day.humidity)}%</span>
+          <span className="hidden sm:inline">💨 {formatNumber(day.windSpeed)} {t.units.kmh} {day.windDir}</span>
+          <span className="sm:hidden">💨 {formatNumber(day.windSpeed)} {t.units.kmh}</span>
+          <span className={day.uvi < 3 ? 'text-green-400' : day.uvi < 6 ? 'text-amber-400' : 'text-red-400'}>🔆 UV {uvLabel}</span>
         </div>
       </div>
     </button>

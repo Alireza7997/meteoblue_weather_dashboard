@@ -382,6 +382,10 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
         .moon-anchor { top: 85px; right: calc(15% + 45px); }
         @media (max-width: 640px) {
           .sun-anchor, .moon-anchor { right: auto; left: 50%; }
+          /* Drop below the search toolbar so the sun/moon never sits
+             behind the search field or buttons on mobile. */
+          .sun-anchor { top: 145px; }
+          .moon-anchor { top: 180px; }
         }
         @keyframes sunBreathe { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
         @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

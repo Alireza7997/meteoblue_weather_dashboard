@@ -44,6 +44,7 @@ const en = {
   },
   search: {
     placeholder: 'Search for a city, landmark, or address...',
+    placeholderShort: 'Search city or address...',
     ariaLabel: 'Search location',
     clear: 'Clear search',
     searching: 'Searching...',
@@ -161,6 +162,7 @@ const fa: Messages = {
   },
   search: {
     placeholder: 'جستجوی شهر، مکان یا آدرس...',
+    placeholderShort: 'جستجوی شهر یا آدرس...',
     ariaLabel: 'جستجوی مکان',
     clear: 'پاک کردن جستجو',
     searching: 'در حال جستجو...',
