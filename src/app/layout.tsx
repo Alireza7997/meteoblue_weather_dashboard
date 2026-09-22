@@ -3,7 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import localFont from "next/font/local";
 import "./globals.css";
-import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_NAME_FA, SITE_URL } from "@/lib/seo";
 
 const vazirmatn = localFont({
   src: '../../public/fonts/variable/Vazirmatn[wght].ttf',
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   title: {
-    default: 'Iran Weather Forecast | Tehran, Mashhad, Isfahan, Shiraz & More',
-    template: '%s | Iran Weather Forecast',
+    default: 'هواشناسی | گزارش آب و هوا و پیش‌بینی دقیق ساعتی و ۷ روزه | Weather Forecast',
+    template: '%s | Weather Forecast',
   },
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
@@ -26,22 +26,22 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
     languages: {
-      en: '/',
       fa: '/?lang=fa',
+      en: '/?lang=en',
     },
   },
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,
-    title: 'Iran Weather Forecast | پیش‌بینی آب‌وهوای ایران',
+    title: 'هواشناسی | گزارش آب و هوا و پیش‌بینی دقیق | Weather Forecast',
     description: SITE_DESCRIPTION,
     url: '/',
-    locale: 'en_US',
-    alternateLocale: ['fa_IR'],
+    locale: 'fa_IR',
+    alternateLocale: ['en_US'],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Iran Weather Forecast | پیش‌بینی آب‌وهوای ایران',
+    title: 'هواشناسی | گزارش آب و هوا | Weather Forecast',
     description: SITE_DESCRIPTION,
   },
   robots: {
@@ -82,10 +82,10 @@ const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: SITE_NAME,
-  alternateName: 'پیش‌بینی آب‌وهوای ایران',
+  alternateName: ['هواشناسی', 'گزارش آب و هوا', SITE_NAME_FA],
   url: `${SITE_URL}/`,
   description: SITE_DESCRIPTION,
-  inLanguage: ['en', 'fa'],
+  inLanguage: ['fa', 'en'],
 };
 
 const appJsonLd = {
@@ -116,13 +116,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr" className={`h-full antialiased ${vazirmatn.variable}`} suppressHydrationWarning>
+    <html lang="fa" dir="rtl" className={`h-full antialiased ${vazirmatn.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             // ?lang=fa|en takes precedence so localized URLs (hreflang)
             // open with the right language; otherwise use stored locale.
-            __html: `(function(){try{var m=location.search.match(/[?&]lang=(en|fa)\\b/);var l=m?m[1]:localStorage.getItem('weather-locale');if(m){try{localStorage.setItem('weather-locale',l)}catch(e){}}if(l==='fa'){document.documentElement.lang='fa';document.documentElement.dir='rtl'}}catch(e){}})()`,
+            // SSR default is fa/rtl for Persian-first SEO.
+            __html: `(function(){try{var m=location.search.match(/[?&]lang=(en|fa)\\b/);var l=m?m[1]:localStorage.getItem('weather-locale');if(m){try{localStorage.setItem('weather-locale',l)}catch(e){}}if(l==='en'){document.documentElement.lang='en';document.documentElement.dir='ltr'}else if(l==='fa'||!l){document.documentElement.lang='fa';document.documentElement.dir='rtl'}}catch(e){}})()`,
           }}
         />
         <script

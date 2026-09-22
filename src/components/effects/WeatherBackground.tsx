@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { motion, useTransform } from 'framer-motion';
 import { useDashboardScroll } from '@/hooks/useDashboardScroll';
 
@@ -29,6 +29,25 @@ function getTimeStage(hour: number): TimeStage {
   if (hour >= 6 && hour < 17) return 'day';
   if (hour >= 17 && hour < 20) return 'evening';
   return 'night';
+}
+
+/**
+ * Shared visibility logic for the sun/moon disc. The dashboard layout uses
+ * this to reserve vertical space for the disc only when it is actually shown.
+ * An unknown condition (e.g. while loading) is treated as clear, matching
+ * what the background renders.
+ */
+export function getCelestialVisibility(
+  condition?: string,
+  hour?: number
+): { showSun: boolean; showMoon: boolean; showCelestial: boolean } {
+  const currentHour = hour ?? (typeof window !== 'undefined' ? new Date().getHours() : 12);
+  const weatherType = getWeatherType(condition);
+  const timeStage = getTimeStage(currentHour);
+  const isClear = weatherType === 'clear';
+  const showSun = isClear && timeStage === 'day';
+  const showMoon = isClear && (timeStage === 'night' || timeStage === 'evening');
+  return { showSun, showMoon, showCelestial: showSun || showMoon };
 }
 
 function getTimeColors(stage: TimeStage): { bg: string; overlay: string } {
@@ -66,7 +85,7 @@ function SunEffect() {
       <div className="absolute sun-anchor" style={anchorStyle}>
         {/* Wide corona haze */}
         <div
-          className="absolute rounded-full"
+          className="absolute rounded-full sun-corona"
           style={{
             width: '450px',
             height: '450px',
@@ -94,7 +113,7 @@ function SunEffect() {
         />
         {/* Inner hot glow */}
         <div
-          className="absolute rounded-full"
+          className="absolute rounded-full sun-inner"
           style={{
             width: '230px',
             height: '230px',
@@ -361,15 +380,43 @@ function FogBands() {
 
 export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
   const currentHour = hour ?? (typeof window !== 'undefined' ? new Date().getHours() : 12);
-  
+
   const weatherType = getWeatherType(condition);
   const timeStage = getTimeStage(currentHour);
   const timeColors = getTimeColors(timeStage);
 
-  const isClear = weatherType === 'clear';
+  const { showSun, showMoon } = getCelestialVisibility(condition, currentHour);
   const showStars = timeStage === 'night' || timeStage === 'evening';
-  const showSun = isClear && timeStage === 'day';
-  const showMoon = isClear && (timeStage === 'night' || timeStage === 'evening');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 639px)');
+    const setVar = () => {
+      if ((!showSun && !showMoon) || !mq.matches) {
+        document.documentElement.style.removeProperty('--celestial-top');
+        return;
+      }
+      const header = document.querySelector('[data-celestial-header]');
+      const headerBottom = header ? header.getBoundingClientRect().bottom : 150;
+      // Must stay in sync with mobile spacer
+      const top = Math.round(headerBottom + (72 + 24) / 2);
+      document.documentElement.style.setProperty('--celestial-top', `${top}px`);
+    };
+    setVar();
+    const raf = requestAnimationFrame(setVar);
+    mq.addEventListener?.('change', setVar);
+    window.addEventListener('resize', setVar);
+    const header = document.querySelector('[data-celestial-header]');
+    const ro =
+      header && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(setVar) : null;
+    if (header && ro) ro.observe(header);
+    return () => {
+      cancelAnimationFrame(raf);
+      mq.removeEventListener?.('change', setVar);
+      window.removeEventListener('resize', setVar);
+      ro?.disconnect();
+    };
+  }, [showSun, showMoon]);
 
   const { progress } = useDashboardScroll();
   const celestialY = useTransform(progress, [0, 1], [0, 90]);
@@ -380,12 +427,17 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
       <style>{`
         .sun-anchor { top: 50px; right: calc(10% + 150px); }
         .moon-anchor { top: 85px; right: calc(15% + 45px); }
-        @media (max-width: 640px) {
-          .sun-anchor, .moon-anchor { right: auto; left: 50%; }
-          /* Drop below the search toolbar so the sun/moon never sits
-             behind the search field or buttons on mobile. */
-          .sun-anchor { top: 145px; }
-          .moon-anchor { top: 180px; }
+        @media (max-width: 639px) {
+          /* Centered horizontally; vertically centered in the reserved gap
+             via --celestial-top (measured in JS). The fallback estimates a
+             typical wrapped toolbar (~148px) + half the gap (84px). */
+          .sun-anchor, .moon-anchor { right: auto; left: 50%; top: var(--celestial-top, 232px); }
+          /* Shrink the widest glow layers so less light bleeds into the
+             location pill and temperature below the gap. (The ray layer is
+             left alone: its spin animation owns the transform property,
+             which would override a scale.) */
+          .sun-corona { transform: scale(0.7); }
+          .sun-inner { transform: scale(0.8); }
         }
         @keyframes sunBreathe { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
         @keyframes sunSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

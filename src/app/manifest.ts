@@ -1,17 +1,17 @@
 import type { MetadataRoute } from 'next';
-import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/seo';
+import { SITE_DESCRIPTION } from '@/lib/seo';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${SITE_NAME} - Hourly & 7-Day Forecasts`,
-    short_name: 'Iran Weather',
+    name: 'Weather Forecast - هواشناسی و گزارش آب و هوا',
+    short_name: 'Weather Forecast',
     description: SITE_DESCRIPTION,
     start_url: '/',
     display: 'standalone',
     background_color: '#060b18',
     theme_color: '#0a0f1a',
-    lang: 'en',
-    dir: 'ltr',
+    lang: 'fa',
+    dir: 'rtl',
     categories: ['weather'],
     icons: [
       {

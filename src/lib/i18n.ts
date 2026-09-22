@@ -4,7 +4,7 @@ import type { WeatherMapLayer } from './types';
 export type Locale = 'en' | 'fa';
 
 export const LOCALES: Locale[] = ['en', 'fa'];
-export const DEFAULT_LOCALE: Locale = 'en';
+export const DEFAULT_LOCALE: Locale = 'fa';
 export const LOCALE_STORAGE_KEY = 'weather-locale';
 
 export function normalizeLocale(value: unknown): Locale {
@@ -50,7 +50,7 @@ export const useLocaleStore = create<LocaleStore>()((set) => ({
 
 const en = {
   app: {
-    title: 'Advanced Weather Analytics',
+    title: 'Weather Forecast',
   },
   search: {
     placeholder: 'Search for a city, landmark, or address...',
@@ -66,7 +66,7 @@ const en = {
     closeMap: 'Close map',
   },
   dashboard: {
-    pageHeading: 'Iran Weather Forecast – Hourly and 7-Day Forecasts for Tehran and Every City',
+    pageHeading: 'Weather Forecast – Hourly and 7-Day Forecasts for Tehran and Every City | هواشناسی و گزارش آب و هوا',
     selectLocationTitle: 'Select a Location',
     selectLocationDesc:
       'Search for a city, click the map button, or use your current location to begin exploring weather analytics.',
@@ -169,7 +169,7 @@ export type Messages = typeof en;
 
 const fa: Messages = {
   app: {
-    title: 'تحلیل پیشرفته آب‌وهوا',
+    title: 'هواشناسی',
   },
   search: {
     placeholder: 'جستجوی شهر، مکان یا آدرس...',
@@ -185,7 +185,7 @@ const fa: Messages = {
     closeMap: 'بستن نقشه',
   },
   dashboard: {
-    pageHeading: 'پیش‌بینی آب‌وهوای ایران – پیش‌بینی ساعتی و ۷ روزه تهران و همه شهرها',
+    pageHeading: 'هواشناسی – گزارش آب و هوا و پیش‌بینی ساعتی و ۷ روزه تهران و همه شهرها',
     selectLocationTitle: 'انتخاب یک مکان',
     selectLocationDesc:
       'شهری را جستجو کنید، روی دکمه نقشه بزنید، یا از موقعیت فعلی خود برای شروع تحلیل آب‌وهوا استفاده کنید.',

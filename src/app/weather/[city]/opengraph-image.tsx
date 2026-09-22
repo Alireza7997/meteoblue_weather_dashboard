@@ -1,12 +1,21 @@
 import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { getCityBySlug } from '@/lib/cities';
 
 export const runtime = 'nodejs';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-export default async function OpengraphImage() {
+export default async function OpengraphImage({
+  params,
+}: {
+  params: Promise<{ city: string }>;
+}) {
+  const { city: slug } = await params;
+  const city = getCityBySlug(slug);
+  const cityFa = city?.nameFa ?? slug;
+
   const [vazirmatnRegular, vazirmatnBold] = await Promise.all([
     readFile(join(process.cwd(), 'public/fonts/ttf/Vazirmatn-Regular.ttf')),
     readFile(join(process.cwd(), 'public/fonts/ttf/Vazirmatn-Bold.ttf')),
@@ -38,35 +47,22 @@ export default async function OpengraphImage() {
             boxShadow: '0 0 45px rgba(255,215,90,0.9), 0 0 110px rgba(255,180,50,0.5)',
           }}
         />
-        <div style={{ fontSize: 72, fontWeight: 800, letterSpacing: -1 }}>
-          Weather Forecast
+        <div style={{ fontSize: 76, fontWeight: 800, letterSpacing: -1 }}>
+          هواشناسی {cityFa}
         </div>
-        <div style={{ fontSize: 44, marginTop: 12, opacity: 0.95 }}>
-          هواشناسی | گزارش آب و هوا
+        <div style={{ fontSize: 40, marginTop: 12, opacity: 0.95 }}>
+          گزارش آب و هوا و پیش‌بینی دقیق | Weather Forecast
         </div>
-        <div style={{ fontSize: 30, marginTop: 28, opacity: 0.8 }}>
-          Tehran · Mashhad · Isfahan · Shiraz · Tabriz
-        </div>
-        <div style={{ fontSize: 26, marginTop: 12, opacity: 0.65 }}>
-          Hourly &amp; 7-day forecasts · Interactive maps
+        <div style={{ fontSize: 28, marginTop: 24, opacity: 0.8 }}>
+          پیش‌بینی ساعتی و ۷ روزه دما · بارش · باد
         </div>
       </div>
     ),
     {
       ...size,
       fonts: [
-        {
-          name: 'Vazirmatn',
-          data: vazirmatnRegular,
-          weight: 400,
-          style: 'normal',
-        },
-        {
-          name: 'Vazirmatn',
-          data: vazirmatnBold,
-          weight: 700,
-          style: 'normal',
-        },
+        { name: 'Vazirmatn', data: vazirmatnRegular, weight: 400, style: 'normal' },
+        { name: 'Vazirmatn', data: vazirmatnBold, weight: 700, style: 'normal' },
       ],
     }
   );

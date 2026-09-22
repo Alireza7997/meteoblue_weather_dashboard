@@ -10,7 +10,7 @@ import { DailyForecast } from '@/components/weather/DailyForecast';
 import { WeatherCharts } from '@/components/weather/WeatherCharts';
 import { WeatherAlerts } from '@/components/weather/WeatherAlerts';
 import { ForecastTimeline } from '@/components/weather/ForecastTimeline';
-import { WeatherBackground } from '@/components/effects/WeatherBackground';
+import { WeatherBackground, getCelestialVisibility } from '@/components/effects/WeatherBackground';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { MapModal } from '@/components/ui/MapModal';
 import { useWeather } from '@/hooks/useWeather';
@@ -98,14 +98,18 @@ export function DashboardLayout() {
 
   const locationName = formatLocationName(selectedLocation, t.dashboard.currentLocation);
 
+  const currentHour = new Date().getHours();
+
+  const { showCelestial } = getCelestialVisibility(currentWeather?.condition, currentHour);
+
   return (
     <DashboardScrollProvider
       value={{ progress: smoothScrollProgress, containerRef: scrollContainerRef }}
     >
     <div className="min-h-screen bg-(--background) flex flex-col relative">
-      <WeatherBackground condition={currentWeather?.condition} hour={new Date().getHours()} />
+      <WeatherBackground condition={currentWeather?.condition} hour={currentHour} />
 
-      <div className="relative z-30 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
+      <div data-celestial-header className="relative z-30 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
         <h1 className="sr-only">{t.dashboard.pageHeading}</h1>
         <SearchBar
           onSelect={handleSearchSelect}
@@ -118,7 +122,8 @@ export function DashboardLayout() {
       <main ref={scrollContainerRef} className="relative z-10 flex-1 overflow-y-auto px-3 sm:px-6 lg:px-8 pb-8">
         <div className="fixed bottom-0 left-0 right-0 h-64 bg-linear-to-t from-(--background) via-(--background)/80 to-transparent pointer-events-none z-20" />
 
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 mt-36 sm:mt-0">
+        {/* Mobile spacer*/}
+        <div className={`max-w-7xl mx-auto space-y-6 md:space-y-8 ${showCelestial ? 'mt-36 sm:mt-0' : 'mt-0'}`}>
           {(error || geoError) && (
             <div className="glass-strong border border-rose-glow/30 rounded-xl p-3 sm:p-4 flex flex-wrap sm:flex-nowrap items-center gap-3 animate-slide-up">
               <AlertTriangle className="text-rose-glow w-5 h-5 shrink-0" />

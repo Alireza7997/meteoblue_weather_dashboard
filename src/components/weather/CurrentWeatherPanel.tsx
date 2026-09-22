@@ -97,8 +97,6 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
   const { containerRef } = useDashboardScroll();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Parallax: track this panel's position within the dashboard scroll
-  // container, then spring it so abrupt scrolls glide instead of snapping.
   const { scrollYProgress } = useScroll({
     container: containerRef,
     target: panelRef,
@@ -137,10 +135,22 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
 
   return (
     <motion.div ref={panelRef} className="relative py-6" style={{ y, scale, opacity, filter }}>
-      {/* Location name */}
+      {/* Location name — opaque backdrop so the sun/moon glow behind it can't wash out the text */}
       <div className="text-center mb-4 z-10 px-2">
-        <div className="inline-block glass rounded-full px-4 py-1.5 max-w-full">
-          <span className="text-sm font-medium text-slate-300 break-words">{locationName}</span>
+        <div
+          className="inline-block glass rounded-full px-4 py-1.5 max-w-full shadow-[0_4px_24px_rgba(0,0,0,0.45)]"
+          style={{
+            backgroundColor: 'rgba(6, 11, 24, 0.65)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          }}
+        >
+          <span
+            className="text-sm font-medium text-slate-100 break-words"
+            style={{ textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}
+          >
+            {locationName}
+          </span>
         </div>
       </div>
 
