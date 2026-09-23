@@ -419,7 +419,7 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
   }, [showSun, showMoon]);
 
   const { progress } = useDashboardScroll();
-  const celestialY = useTransform(progress, [0, 1], [0, 90]);
+  const starsY = useTransform(progress, [0, 1], [0, 90]);
   const particlesY = useTransform(progress, [0, 1], [0, 35]);
 
   return (
@@ -456,12 +456,16 @@ export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
       {/* Top-to-bottom overlay for reduced contrast */}
       <div className="absolute inset-0" style={{ background: timeColors.overlay }} />
 
-      {/* Celestial layer (stars / sun / moon) — slowest, most distant */}
-      <motion.div className="absolute inset-0" style={{ y: celestialY }}>
+      {/* Star field — slowest, most distant parallax layer */}
+      <motion.div className="absolute inset-0" style={{ y: starsY }}>
         {showStars && <NightStars />}
+      </motion.div>
+
+      {/* Sun / moon — static placement; must not shift with the scrollbar */}
+      <div className="absolute inset-0">
         {showSun && <SunEffect />}
         {showMoon && <MoonEffect />}
-      </motion.div>
+      </div>
 
       {/* Atmospheric particles — nearer layer */}
       <motion.div className="absolute inset-0" style={{ y: particlesY }}>
