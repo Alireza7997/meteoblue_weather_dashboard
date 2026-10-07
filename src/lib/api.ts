@@ -93,22 +93,33 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
   const timeStrings = data1h.time || [];
   const timezone = any?.metadata?.timezone_abbrevation || 'UTC';
   const utcOffset = any?.metadata?.utc_timeoffset || 0;
-  const timezoneOffset = -utcOffset * 60; // Convert hours to minutes, negate for JS
+  // Seconds to add to a UTC instant to get the location's wall clock
+  // (meteoblue reports hours, east-positive: 3.5 for UTC+03:30).
+  const timezoneOffset = Math.round(utcOffset * 3600);
 
+  // The API returns local wall-clock strings ("2026-10-07 13:00"), so shift
+  // them onto real UTC instants. Everything downstream converts back with
+  // `timestamp + timezoneOffset` and UTC getters, which keeps the rendered
+  // clock independent of the viewer's own timezone.
   const getTimestamp = (timeStr: string): number => {
     if (!timeStr) return now;
     const [dateStr, hourStr] = timeStr.split(' ');
     const date = new Date(dateStr);
     const hour = parseInt(hourStr.substring(0, 2), 10);
     date.setUTCHours(hour, 0, 0, 0);
-    return Math.floor(date.getTime() / 1000);
+    return Math.floor(date.getTime() / 1000) - timezoneOffset;
   };
 
   const timestamps = timeStrings.map(getTimestamp);
 
-  // Find current hour index
-  let currentIdx = timestamps.findIndex((t: number) => Math.abs(t - now) < 1800);
-  if (currentIdx < 0) currentIdx = timestamps.findIndex((t: number) => t > now) || 0;
+  // Find the hour currently in progress (last entry at or before now) so the
+  // hero shows the present, not a slot still 15 minutes away.
+  let currentIdx = -1;
+  for (let i = 0; i < timestamps.length; i++) {
+    if (timestamps[i] <= now) currentIdx = i;
+    else break;
+  }
+  if (currentIdx < 0) currentIdx = 0;
 
   const current: CurrentWeather = {
     dt: timestamps[currentIdx] || now,
@@ -146,20 +157,21 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
     }
   }
 
-  // Daily forecast - aggregate by day
+  // Daily forecast - aggregate by the location's calendar day (not UTC),
+  // so a day bucket lines up with the "Today"/"Tomorrow" labels.
   const daily: DailyForecast[] = [];
   const daysMap = new Map<number, number[]>();
 
   timestamps.forEach((ts: number, idx: number) => {
-    const dayStart = Math.floor(ts / 86400) * 86400;
-    if (!daysMap.has(dayStart)) {
-      daysMap.set(dayStart, []);
+    const dayIndex = Math.floor((ts + timezoneOffset) / 86400);
+    if (!daysMap.has(dayIndex)) {
+      daysMap.set(dayIndex, []);
     }
-    daysMap.get(dayStart)!.push(idx);
+    daysMap.get(dayIndex)!.push(idx);
   });
 
   let dayCount = 0;
-  for (const [dayStart, indices] of daysMap) {
+  for (const [dayIndex, indices] of daysMap) {
     if (dayCount >= 7) break;
 
     const dayTemps = indices.map(i => temperature[i]).filter(t => t !== undefined);
@@ -168,8 +180,24 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
 
     if (dayTemps.length === 0) continue;
 
+    // Direction is reported for the windiest hour, matching `wind_speed`.
+    const gustiestIdx = indices.reduce(
+      (best, i) => ((windspeed[i] || 0) > (windspeed[best] || 0) ? i : best),
+      indices[0]
+    );
+
+    // The day's icon/condition comes from the hour nearest local noon — the
+    // first entry of the bucket is midnight, which would under-represent the day.
+    const localHour = (i: number) =>
+      Math.floor((((timestamps[i] + timezoneOffset) % 86400) + 86400) % 86400 / 3600);
+    const noonIdx = indices.reduce(
+      (best, i) => (Math.abs(localHour(i) - 12) < Math.abs(localHour(best) - 12) ? i : best),
+      indices[0]
+    );
+
     daily.push({
-      dt: dayStart,
+      // Encoded so that `dt + timezoneOffset` lands on local midnight.
+      dt: dayIndex * 86400 - timezoneOffset,
       temp: {
         day: dayTemps.reduce((a, b) => a + b, 0) / dayTemps.length,
         min: Math.min(...dayTemps),
@@ -180,9 +208,11 @@ function transformMeteoBlueResponse(any: any, lat: number, lon: number): Weather
       },
       humidity: Math.round(indices.reduce((sum, i) => sum + relativehumidity[i], 0) / indices.length),
       wind_speed: Math.max(...indices.map(i => windspeed[i] || 0)),
+      wind_deg: winddirection[gustiestIdx] || 0,
+      uvi: Math.max(...indices.map(i => uvindex[i] || 0)),
       pop: dayPrecipProb / 100,
       rain: dayPrecip > 0 ? dayPrecip : undefined,
-      weather: [transformPictocode(pictocode[indices[0]] || 10)],
+      weather: [transformPictocode(pictocode[noonIdx] || 10)],
     });
 
     dayCount++;
@@ -225,14 +255,17 @@ export async function fetchWeatherData(lat: number, lon: number): Promise<Weathe
   }
 }
 
-function transformGeocodingResult(result: any): GeocodingResult {
+function transformGeocodingResult(result: any, language: string): GeocodingResult {
+  const name = result.name || result.city || 'Unknown';
   return {
-    name: result.name || result.city || 'Unknown',
+    name,
     lat: result.latitude || result.lat || 0,
     lon: result.longitude || result.lon || 0,
     country: result.country || result.country_code || '',
     state: result.admin1 || result.state || undefined,
-    local_names: result.local_names || undefined,
+    // The API answers in the requested language; record it alongside any
+    // extra local names it returned so the label survives a locale switch.
+    local_names: { ...(result.local_names || {}), [language]: name },
   };
 }
 
@@ -250,7 +283,7 @@ export async function fetchGeocoding(query: string, language: string = 'en'): Pr
     const results = data.results || [];
     const resultsArray = Array.isArray(results) ? results : [results];
 
-    return resultsArray.map(transformGeocodingResult);
+    return resultsArray.map((result) => transformGeocodingResult(result, language));
   } catch (error) {
     console.error('Failed to fetch geocoding:', error);
     return [];
@@ -259,7 +292,8 @@ export async function fetchGeocoding(query: string, language: string = 'en'): Pr
 
 export async function fetchReverseGeocoding(
   lat: number,
-  lon: number
+  lon: number,
+  language: string = 'en'
 ): Promise<GeocodingResult | null> {
 
   try {
@@ -267,7 +301,7 @@ export async function fetchReverseGeocoding(
       `https://api.bigdatacloud.net/data/reverse-geocode-client` +
       `?latitude=${lat}` +
       `&longitude=${lon}` +
-      `&localityLanguage=en`;
+      `&localityLanguage=${language}`;
 
     const response = await fetch(url);
 
@@ -280,12 +314,16 @@ export async function fetchReverseGeocoding(
     const data =
       (await response.json()) as BigDataCloudReverseGeocodingResponse;
 
+    const name = data.city || data.locality || "Unknown location";
     return {
-      name: data.city || data.locality || "Unknown location",
+      name,
       lat: data.latitude,
       lon: data.longitude,
       country: data.countryName || "",
       state: data.principalSubdivision || "",
+      // Remember which language the name came back in, so the label can
+      // switch back once the user flips the locale.
+      local_names: { [language]: name },
     };
   } catch (error) {
     console.error("Failed to fetch reverse geocoding:", error);

@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 
 import type { AppLocation } from '@/lib/types';
 import { fetchReverseGeocoding } from '@/lib/api';
-import type { Locale } from '@/lib/i18n';
+import { useLocaleStore, type Locale } from '@/lib/i18n';
 
 interface UseGeocodingReturn {
   search: (query: string, locale?: Locale) => Promise<AppLocation[]>;
@@ -100,6 +100,7 @@ async function resolvePosition(): Promise<GeolocationPosition> {
 export function useGeocodingPosition() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const locale = useLocaleStore((state) => state.locale);
 
   const getCurrentLocation = useCallback(async (): Promise<GeolocationResult> => {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
@@ -122,7 +123,7 @@ export function useGeocodingPosition() {
       const { latitude, longitude } = position.coords;
 
       try {
-        const result = await fetchReverseGeocoding(latitude, longitude);
+        const result = await fetchReverseGeocoding(latitude, longitude, locale === 'fa' ? 'fa' : 'en');
 
         if (!result) {
           throw new Error('Failed to determine your location');
@@ -159,7 +160,7 @@ export function useGeocodingPosition() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   return { getCurrentLocation, isLoading, error };
 }

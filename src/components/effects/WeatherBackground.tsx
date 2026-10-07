@@ -8,15 +8,20 @@ type WeatherEffect = 'rain' | 'snow' | 'clouds' | 'clear' | 'thunderstorm' | 'fo
 type TimeStage = 'day' | 'evening' | 'night';
 
 interface WeatherBackgroundProps {
-  condition?: string;
+  /**
+   * Untranslated API condition (e.g. "moderate rain showers"). The effect
+   * matcher only understands English keywords, so passing the localized
+   * label would silently fall back to "clear" in Persian.
+   */
+  conditionKey?: string;
   hour?: number;
 }
 
 // --- Helper Functions ---
 
-function getWeatherType(condition?: string): WeatherEffect {
-  if (!condition) return 'clear';
-  const lower = condition.toLowerCase();
+function getWeatherType(conditionKey?: string): WeatherEffect {
+  if (!conditionKey) return 'clear';
+  const lower = conditionKey.toLowerCase();
   if (lower.includes('thunder') || lower.includes('storm')) return 'thunderstorm';
   if (lower.includes('rain') || lower.includes('drizzle')) return 'rain';
   if (lower.includes('snow')) return 'snow';
@@ -38,11 +43,11 @@ function getTimeStage(hour: number): TimeStage {
  * what the background renders.
  */
 export function getCelestialVisibility(
-  condition?: string,
+  conditionKey?: string,
   hour?: number
 ): { showSun: boolean; showMoon: boolean; showCelestial: boolean } {
   const currentHour = hour ?? (typeof window !== 'undefined' ? new Date().getHours() : 12);
-  const weatherType = getWeatherType(condition);
+  const weatherType = getWeatherType(conditionKey);
   const timeStage = getTimeStage(currentHour);
   const isClear = weatherType === 'clear';
   const showSun = isClear && timeStage === 'day';
@@ -59,8 +64,12 @@ function getTimeColors(stage: TimeStage): { bg: string; overlay: string } {
       };
     case 'evening':
       return {
-        bg: 'linear-gradient(180deg, #0f0c29 0%, #6f0000 40%, #d97757 90%, #fbbf24 100%)',
-        overlay: 'linear-gradient(180deg, rgba(40,20,30,0.2) 0%, rgba(20,20,40,0.5) 100%)',
+        // Stops are px-based, not %: this layer spans the whole document (a
+        // `perspective` on <body> makes body the containing block for fixed
+        // children), so percentages would scale with page length. The dark
+        // hold keeps the red off the hero, which ends around 500-700px.
+        bg: 'linear-gradient(180deg, #0f0c29 0px, #0f0c29 760px, #6f0000 1080px, #d97757 calc(100% - 300px), #fbbf24 100%)',
+        overlay: 'linear-gradient(180deg, rgba(15,17,40,0.2) 0%, rgba(45,20,25,0.5) 100%)',
       };
     case 'night':
       return {
@@ -378,14 +387,14 @@ function FogBands() {
 
 // --- Main Component ---
 
-export function WeatherBackground({ condition, hour }: WeatherBackgroundProps) {
+export function WeatherBackground({ conditionKey, hour }: WeatherBackgroundProps) {
   const currentHour = hour ?? (typeof window !== 'undefined' ? new Date().getHours() : 12);
 
-  const weatherType = getWeatherType(condition);
+  const weatherType = getWeatherType(conditionKey);
   const timeStage = getTimeStage(currentHour);
   const timeColors = getTimeColors(timeStage);
 
-  const { showSun, showMoon } = getCelestialVisibility(condition, currentHour);
+  const { showSun, showMoon } = getCelestialVisibility(conditionKey, currentHour);
   const showStars = timeStage === 'night' || timeStage === 'evening';
 
   useEffect(() => {

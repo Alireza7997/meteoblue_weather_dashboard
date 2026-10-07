@@ -8,13 +8,13 @@ A professional meteorological dashboard built with Next.js 16, React 19, TypeScr
 
 - **Three ways to pick a location**: search with autocomplete, click on the interactive map, or use browser geolocation (with accurate/low-accuracy fallback and visible error handling)
 - **Reverse Geocoding**: coordinates resolve to city/state/country names via BigDataCloud
-- **Current Weather**: temperature, humidity, wind speed & direction, pressure, cloud coverage, and UV index
-- **Hourly Forecast**: 24-hour scrollable timeline with temperature, precipitation probability, and wind
-- **Daily Forecast**: 7-day forecast with highs/lows, conditions, wind, humidity, and UV level
+- **Current Weather**: temperature, humidity, wind speed & direction, pressure, rain chance, and UV index
+- **Hourly Forecast**: 24-hour scrollable timeline with temperature, precipitation probability, and wind (display-only — hour selection lives in the Forecast Timeline)
+- **Daily Forecast**: 7-day forecast with highs/lows, conditions, wind, humidity, and UV level; picking a day previews it in the current panel and background
 - **Interactive Charts**: temperature trend, precipitation (probability + amount), wind (speed + gusts), humidity & pressure, and daily high/low comparison
 - **Weather Insights**: rule-based alerts for rain, temperature swings, strong winds, and UV index
 - **Forecast Timeline**: unified time selector synced with the charts' selected-hour marker
-- **Animated Backgrounds**: sun, moon & stars, rain, snow, clouds, fog, and lightning effects that respond to the current weather condition and time of day
+- **Animated Backgrounds**: sun, moon & stars, rain, snow, clouds, fog, and lightning effects that respond to the displayed weather condition (today's, or the day picked in the 7-day forecast) and time of day
 - **Bilingual UI**: English and Persian with full RTL layout, Persian digits, Jalali calendar dates, and locale-aware formatting — see [Internationalization](#internationalization)
 - **Responsive Design**: mobile-first layouts with RTL support
 - **Dark Theme**: premium glassmorphism styling with animated weather effects

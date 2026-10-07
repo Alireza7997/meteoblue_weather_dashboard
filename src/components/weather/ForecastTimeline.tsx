@@ -53,7 +53,8 @@ export function ForecastTimeline({ hourly }: ForecastTimelineProps) {
                 }`}
               >
                 <span className="text-xs font-medium text-slate-300" dir="ltr">
-                  {formatNumber(parseInt(h.time, 10))}:{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
+                  {formatNumber(parseInt(h.time, 10), { minimumIntegerDigits: 2, useGrouping: false })}
+                  :{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
                 </span>
                 <span className="text-lg">{index === selectedHour ? '●' : '○'}</span>
               </button>

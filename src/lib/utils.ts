@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow } from '@/lib/date-fns';
+import { format } from '@/lib/date-fns';
 import type { CurrentWeather, HourlyForecast, DailyForecast, WeatherCondition } from './types';
 import { WEATHER_ICONS, getWindDirection } from './constants';
 import {
@@ -8,6 +8,7 @@ import {
   formatMessage,
   formatNumber,
   getDictionary,
+  localizeDigits,
   translateCondition,
   translateWindDirection,
   type Locale,
@@ -63,17 +64,49 @@ export function formatHour(timestamp: number, timezoneOffset: number): string {
   return format(date, 'HH');
 }
 
-export function formatDay(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
-  const date = new Date((timestamp + timezoneOffset) * 1000);
+/**
+ * Forecast days are bucketed by the *location's* calendar day, not the
+ * viewer's, so "Today"/"Tomorrow" must be derived from the location offset.
+ * `localDayIndex` maps an epoch to the location-local day number.
+ */
+function localDayIndex(timestamp: number, timezoneOffset: number): number {
+  return Math.floor((timestamp + timezoneOffset) / 86400);
+}
+
+function todayIndex(timezoneOffset: number): number {
+  return localDayIndex(Math.floor(Date.now() / 1000), timezoneOffset);
+}
+
+/**
+ * Calendar date of a forecast timestamp in the location's timezone, returned as
+ * a plain local Date whose getters are already timezone-independent.
+ */
+function calendarDate(timestamp: number, timezoneOffset: number): Date {
+  const shifted = new Date((timestamp + timezoneOffset) * 1000);
+  return new Date(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+}
+
+export function isForecastToday(timestamp: number, timezoneOffset: number): boolean {
+  return localDayIndex(timestamp, timezoneOffset) === todayIndex(timezoneOffset);
+}
+
+/** "Today" / "Tomorrow" / weekday name, in the location's timezone. */
+export function formatDayLabel(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
   const dict = getDictionary(locale);
-  if (isToday(date)) return dict.daily.today;
-  if (isTomorrow(date)) return dict.daily.tomorrow;
-  return formatLocaleDate(date, locale, 'full');
+  const day = localDayIndex(timestamp, timezoneOffset);
+  const today = todayIndex(timezoneOffset);
+  if (day === today) return dict.daily.today;
+  if (day === today + 1) return dict.daily.tomorrow;
+  return formatLocaleDate(calendarDate(timestamp, timezoneOffset), locale, 'weekdayLong');
+}
+
+/** Calendar date only, e.g. "Oct 7" / "۱۷ مهر". */
+export function formatDayDate(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
+  return formatLocaleDate(calendarDate(timestamp, timezoneOffset), locale, 'date');
 }
 
 export function formatDayShort(timestamp: number, timezoneOffset: number, locale: Locale = DEFAULT_LOCALE): string {
-  const date = new Date((timestamp + timezoneOffset) * 1000);
-  return formatLocaleDate(date, locale, 'weekday');
+  return formatLocaleDate(calendarDate(timestamp, timezoneOffset), locale, 'weekday');
 }
 
 export function getWeatherIcon(iconCode: string): string {
@@ -92,24 +125,25 @@ export function getCurrentWeatherInfo(
 ): {
   temp: string;
   condition: string;
+  /** Untranslated API description — the background effect matches on this. */
+  conditionKey: string;
   icon: string;
   humidity: string;
   wind: string;
   windDir: string;
   pressure: string;
   uv: string;
-  clouds: string;
 } {
   return {
     temp: formatTemperature(current.temp, locale),
     condition: getWeatherDescription(current.weather, locale),
+    conditionKey: current.weather[0]?.description ?? '',
     icon: getWeatherIcon(current.weather[0]?.icon || '01d'),
     humidity: formatHumidity(current.humidity, locale),
     wind: formatWindSpeed(current.wind_speed, locale),
     windDir: translateWindDirection(getWindDirection(current.wind_deg), locale),
     pressure: formatPressure(current.pressure, locale),
     uv: formatUVIndex(current.uvi),
-    clouds: `${formatNumber(current.clouds, locale)}%`,
   };
 }
 
@@ -121,7 +155,8 @@ export function processHourlyForecast(
 ) {
   return hourly.slice(0, hours).map((hour) => ({
     time: formatHour(hour.dt, timezoneOffset),
-    timeLabel: formatNumber(parseInt(formatHour(hour.dt, timezoneOffset), 10), locale),
+    // Zero-padded and localized ("۰۷" / "07") so every slot renders as HH:00.
+    timeLabel: localizeDigits(formatHour(hour.dt, timezoneOffset), locale),
     timestamp: hour.dt,
     temp: Math.round(hour.temp),
     pop: hour.pop ? Math.round(hour.pop * 100) : 0,
@@ -143,20 +178,93 @@ export function processDailyForecast(
   locale: Locale = DEFAULT_LOCALE
 ) {
   return daily.map((day) => ({
-    date: formatDay(day.dt, timezoneOffset, locale),
-    dateShort: formatDayShort(day.dt, timezoneOffset, locale),
     timestamp: day.dt,
+    isToday: isForecastToday(day.dt, timezoneOffset),
+    dayLabel: formatDayLabel(day.dt, timezoneOffset, locale),
+    dateLabel: formatDayDate(day.dt, timezoneOffset, locale),
+    dateShort: formatDayShort(day.dt, timezoneOffset, locale),
     tempMax: Math.round(day.temp.max),
     tempMin: Math.round(day.temp.min),
     pop: day.pop ? Math.round(day.pop * 100) : 0,
     precipitation: day.rain || day.snow || 0,
     icon: getWeatherIcon(day.weather[0]?.icon || '01d'),
     condition: getWeatherDescription(day.weather, locale),
+    conditionKey: day.weather[0]?.description ?? '',
     windSpeed: day.wind_speed ? Math.round(day.wind_speed * 3.6) : 0,
     windDir: day.wind_deg ? translateWindDirection(getWindDirection(day.wind_deg), locale) : '',
     humidity: day.humidity ?? 0,
     uvi: day.uvi ?? 0,
   }));
+}
+
+/** Selected day falls back to the first (today's) entry when nothing matches. */
+export function resolveSelectedDay<T extends { timestamp: number }>(
+  selectedDate: string,
+  days: T[]
+): T | null {
+  if (days.length === 0) return null;
+  return days.find((day) => String(day.timestamp) === selectedDate) ?? days[0];
+}
+
+export type HeroWeather = {
+  temp: string;
+  tempMin?: string;
+  condition: string;
+  conditionKey: string;
+  icon: string;
+  dayLabel?: string;
+  humidity: string;
+  wind: string;
+  windDir: string;
+  pressure?: string;
+  precipChance?: string;
+  uv: string;
+};
+
+/**
+ * Hero panel data for the day the user picked in the 7-day forecast.
+ * Today keeps the live readings; any other day previews that day's aggregates.
+ */
+export function buildHeroWeather(
+  current: ReturnType<typeof getCurrentWeatherInfo>,
+  day: DailyForecastItem | null,
+  locale: Locale = DEFAULT_LOCALE,
+  kmhUnit = 'km/h'
+): HeroWeather | null {
+  if (!current) return null;
+
+  const base: HeroWeather = {
+    temp: current.temp,
+    condition: current.condition,
+    conditionKey: current.conditionKey,
+    icon: current.icon,
+    humidity: current.humidity,
+    wind: current.wind,
+    windDir: current.windDir,
+    pressure: current.pressure,
+    uv: current.uv,
+  };
+
+  if (!day) return base;
+
+  base.precipChance = `${formatNumber(day.pop, locale)}%`;
+
+  if (day.isToday) return base;
+
+  return {
+    ...base,
+    temp: formatTemperature(day.tempMax, locale),
+    tempMin: formatTemperature(day.tempMin, locale),
+    condition: day.condition,
+    conditionKey: day.conditionKey,
+    icon: day.icon,
+    dayLabel: `${day.dayLabel} · ${day.dateLabel}`,
+    humidity: `${formatNumber(day.humidity, locale)}%`,
+    wind: `${formatNumber(day.windSpeed, locale)} ${kmhUnit}`,
+    windDir: day.windDir,
+    pressure: undefined,
+    uv: normalizeUvCategory(day.uvi),
+  };
 }
 
 export function generateWeatherInsights(

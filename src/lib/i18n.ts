@@ -104,6 +104,7 @@ const en = {
     pressure: 'Pressure',
     clouds: 'Clouds',
     uv: 'UV Index',
+    precipChance: 'Rain Chance',
   },
   units: {
     kmh: 'km/h',
@@ -223,6 +224,7 @@ const fa: Messages = {
     pressure: 'فشار',
     clouds: 'ابر',
     uv: 'شاخص UV',
+    precipChance: 'احتمال بارش',
   },
   units: {
     kmh: 'کیلومتر/ساعت',
@@ -336,26 +338,45 @@ export function localizeDigits(str: string, locale: Locale): string {
 
 export function formatLocaleTime(date: Date, locale: Locale): string {
   const pad = (n: number) => n.toString().padStart(2, '0');
-  const raw = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  // Forecast instants arrive as location wall-clock encoded as UTC.
+  const raw = `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
   return localizeDigits(raw, locale);
 }
+
+export type DateStyle = 'full' | 'weekday' | 'weekdayLong' | 'date';
 
 export function formatLocaleDate(
   date: Date,
   locale: Locale,
-  style: 'full' | 'weekday'
+  style: DateStyle
 ): string {
   const intlLocale = toIntlLocale(locale);
   if (locale === 'fa') {
-    const formatter = style === 'full'
-      ? new Intl.DateTimeFormat(intlLocale, { weekday: 'long', day: 'numeric', month: 'long' })
-      : new Intl.DateTimeFormat(intlLocale, { weekday: 'short' });
-    return formatter.format(date);
+    switch (style) {
+      case 'full':
+        return new Intl.DateTimeFormat(intlLocale, {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        }).format(date);
+      case 'weekdayLong':
+        return new Intl.DateTimeFormat(intlLocale, { weekday: 'long' }).format(date);
+      case 'date':
+        return new Intl.DateTimeFormat(intlLocale, { day: 'numeric', month: 'long' }).format(date);
+      default:
+        return new Intl.DateTimeFormat(intlLocale, { weekday: 'short' }).format(date);
+    }
   }
-  if (style === 'full') {
-    return `${WEEKDAY_SHORT_EN[date.getDay()]}, ${MONTH_SHORT_EN[date.getMonth()]} ${date.getDate()}`;
+  switch (style) {
+    case 'full':
+      return `${WEEKDAY_SHORT_EN[date.getDay()]}, ${MONTH_SHORT_EN[date.getMonth()]} ${date.getDate()}`;
+    case 'weekdayLong':
+      return new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(date);
+    case 'date':
+      return `${MONTH_SHORT_EN[date.getMonth()]} ${date.getDate()}`;
+    default:
+      return WEEKDAY_SHORT_EN[date.getDay()];
   }
-  return WEEKDAY_SHORT_EN[date.getDay()];
 }
 
 const WIND_DIRECTIONS_FA: Record<string, string> = {
@@ -413,4 +434,39 @@ export function translateCondition(description: string, locale: Locale): string 
   }
   if (!description) return 'Unknown';
   return description.charAt(0).toUpperCase() + description.slice(1);
+}
+
+const COUNTRIES_FA: Record<string, string> = {
+  Iran: 'ایران',
+  Afghanistan: 'افغانستان',
+  Iraq: 'عراق',
+  Turkey: 'ترکیه',
+  'United Arab Emirates': 'امارات متحده عربی',
+  Qatar: 'قطر',
+  Kuwait: 'کویت',
+  'Saudi Arabia': 'عربستان سعودی',
+  Oman: 'عمان',
+  Syria: 'سوریه',
+  Lebanon: 'لبنان',
+  Pakistan: 'پاکستان',
+  India: 'هند',
+  China: 'چین',
+  Japan: 'ژاپن',
+  Russia: 'روسیه',
+  Germany: 'آلمان',
+  France: 'فرانسه',
+  Italy: 'ایتالیا',
+  Spain: 'اسپانیا',
+  Netherlands: 'هلند',
+  'United Kingdom': 'بریتانیا',
+  'United States': 'ایالات متحده آمریکا',
+  Canada: 'کانادا',
+  Australia: 'استرالیا',
+};
+
+/** Unknown countries fall back to the name the geocoder returned. */
+export function translateCountry(country: string | undefined, locale: Locale): string | undefined {
+  if (!country) return country;
+  if (locale !== 'fa') return country;
+  return COUNTRIES_FA[country] ?? country;
 }

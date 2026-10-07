@@ -18,6 +18,8 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { useSectionInView } from '@/hooks/useSectionInView';
 import { useLocale } from '@/hooks/useLocale';
 import { useWeatherStore } from '@/lib/store';
+import { buildHeroWeather, resolveSelectedDay } from '@/lib/utils';
+import type { Locale } from '@/lib/i18n';
 import type { AppLocation, WeatherMapLayer } from '@/lib/types';
 import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import Portal from '../Portal';
@@ -44,20 +46,27 @@ function AnimatedSection({
   );
 }
 
-function formatLocationName(location: AppLocation | null, currentLocationLabel: string): string {
+function formatLocationName(
+  location: AppLocation | null,
+  currentLocationLabel: string,
+  unnamedLocationLabel: string,
+  locale: Locale
+): string {
   if (!location) return '';
+  const name = location.localNames?.[locale] ?? location.name;
+  const isPlaceholder = name === 'Loading...' || name === unnamedLocationLabel;
   const parts = [
-    location.name !== 'Loading...' && location.name !== 'Selected Location' ? location.name : currentLocationLabel,
+    isPlaceholder ? currentLocationLabel : name,
     location.state,
     location.country,
   ].filter(Boolean);
-  return parts.join(', ').replace('Iran (Islamic Republic of)', 'Iran');
+  return parts.join(locale === 'fa' ? '، ' : ', ').replace('Iran (Islamic Republic of)', 'Iran');
 }
 
 export function DashboardLayout() {
-  const { selectedLocation, setSelectedLocation, mapModalOpen, setMapModalOpen, mapLayer, setMapLayer } = useWeatherStore();
+  const { selectedLocation, setSelectedLocation, selectedDate, mapModalOpen, setMapModalOpen, mapLayer, setMapLayer } = useWeatherStore();
   const { getCurrentLocation, isLoading: isGeoLoading } = useGeolocation();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [geoError, setGeoError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLElement>(null);
 
@@ -96,18 +105,28 @@ export function DashboardLayout() {
     refetch();
   };
 
-  const locationName = formatLocationName(selectedLocation, t.dashboard.currentLocation);
+  const locationName = formatLocationName(
+    selectedLocation,
+    t.dashboard.currentLocation,
+    t.map.selectedLocationFallback,
+    locale
+  );
 
   const currentHour = new Date().getHours();
 
-  const { showCelestial } = getCelestialVisibility(currentWeather?.condition, currentHour);
+  // What the hero shows: live readings for today, or the picked day's forecast.
+  const hero = currentWeather
+    ? buildHeroWeather(currentWeather, resolveSelectedDay(selectedDate, dailyForecast), locale, t.units.kmh)
+    : null;
+
+  const { showCelestial } = getCelestialVisibility(hero?.conditionKey, currentHour);
 
   return (
     <DashboardScrollProvider
       value={{ progress: smoothScrollProgress, containerRef: scrollContainerRef }}
     >
     <div className="min-h-screen bg-(--background) flex flex-col relative">
-      <WeatherBackground condition={currentWeather?.condition} hour={currentHour} />
+      <WeatherBackground conditionKey={hero?.conditionKey} hour={currentHour} />
 
       <div data-celestial-header className="relative z-30 flex flex-col items-center pt-6 sm:pt-8 pb-4 px-3 sm:px-4">
         <h1 className="sr-only">{t.dashboard.pageHeading}</h1>
@@ -140,7 +159,7 @@ export function DashboardLayout() {
               <AnimatedSection animation="animate-section-blur" delay={100}>
                 <CurrentWeatherPanel
                   locationName={locationName}
-                  current={currentWeather}
+                  current={hero}
                   isLoading={isLoading}
                 />
               </AnimatedSection>

@@ -12,8 +12,10 @@ import {
   formatLocaleDate as baseFormatLocaleDate,
   translateWindDirection as baseTranslateWindDirection,
   translateCondition as baseTranslateCondition,
+  translateCountry as baseTranslateCountry,
   type Locale,
   type Messages,
+  type DateStyle,
 } from '@/lib/i18n';
 
 export interface UseLocaleReturn {
@@ -24,9 +26,10 @@ export interface UseLocaleReturn {
   intlLocale: string;
   formatMessage: (template: string, params?: Record<string, string | number>) => string;
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string;
-  formatLocaleDate: (date: Date, style: 'full' | 'weekday') => string;
+  formatLocaleDate: (date: Date, style: DateStyle) => string;
   translateWindDirection: (direction: string) => string;
   translateCondition: (description: string) => string;
+  translateCountry: (country: string | undefined) => string | undefined;
 }
 
 let storedLocaleRead = false;
@@ -59,5 +62,6 @@ export function useLocale(): UseLocaleReturn {
     formatLocaleDate: (date, style) => baseFormatLocaleDate(date, locale, style),
     translateWindDirection: (direction) => baseTranslateWindDirection(direction, locale),
     translateCondition: (description) => baseTranslateCondition(description, locale),
+    translateCountry: (country) => baseTranslateCountry(country, locale),
   };
 }

@@ -1,17 +1,22 @@
+/**
+ * Formats a forecast instant. Callers pass `timestamp + timezoneOffset`, i.e.
+ * the location's wall clock encoded as UTC, so the UTC accessors are used —
+ * that keeps the result identical no matter where the viewer is.
+ */
 export function format(date: Date | number, formatStr: string): string {
   const d = typeof date === 'number' ? new Date(date) : date;
 
   const pad = (n: number) => n.toString().padStart(2, '0');
 
   return formatStr
-    .replace('yyyy', d.getFullYear().toString())
-    .replace('MM', pad(d.getMonth() + 1))
-    .replace('dd', pad(d.getDate()))
-    .replace('HH', pad(d.getHours()))
-    .replace('mm', pad(d.getMinutes()))
-    .replace('ss', pad(d.getSeconds()))
-    .replace('EEE', ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()])
-    .replace('MMM', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]);
+    .replace('yyyy', d.getUTCFullYear().toString())
+    .replace('MM', pad(d.getUTCMonth() + 1))
+    .replace('dd', pad(d.getUTCDate()))
+    .replace('HH', pad(d.getUTCHours()))
+    .replace('mm', pad(d.getUTCMinutes()))
+    .replace('ss', pad(d.getUTCSeconds()))
+    .replace('EEE', ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()])
+    .replace('MMM', ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getUTCMonth()]);
 }
 
 export function isToday(date: Date): boolean {

@@ -17,7 +17,9 @@ interface WeatherStore extends WeatherState {
 
 const initialState: WeatherState = {
   selectedLocation: DEFAULT_LOCATION,
-  selectedDate: new Date().toISOString().split('T')[0],
+  // Forecast day timestamp (seconds). Empty means "no explicit pick", which
+  // resolveSelectedDay() renders as today's entry.
+  selectedDate: '',
   selectedHour: 0,
   mapLayer: 'temperature',
   isLoading: false,

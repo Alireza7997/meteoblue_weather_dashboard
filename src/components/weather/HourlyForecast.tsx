@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { HourlyForecastItem } from '@/lib/utils';
 import { useWeatherStore } from '@/lib/store';
 import { useLocale } from '@/hooks/useLocale';
@@ -10,17 +9,15 @@ interface HourlyForecastProps {
   timezoneOffset: number;
 }
 
+/**
+ * Read-only strip of the next 24 hours. The hour selection lives in the
+ * Forecast Timeline below, so these cards are not interactive.
+ */
 export function HourlyForecast({ hourly }: HourlyForecastProps) {
-  const { selectedHour, setSelectedHour } = useWeatherStore();
+  const { selectedHour } = useWeatherStore();
   const { t, formatNumber } = useLocale();
-  const [scrollPosition, setScrollPosition] = useState(0);
-
-  const scrollToHour = (hour: number) => {
-    const itemWidth = 80;
-    const containerWidth = window.innerWidth - 48;
-    const offset = hour * itemWidth - containerWidth / 2 + itemWidth / 2;
-    setScrollPosition(Math.max(0, offset));
-  };
+  const minuteZero = formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false });
+  const selected = hourly[selectedHour];
 
   return (
     <div className="panel">
@@ -29,29 +26,20 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
         <div className="text-sm text-slate-300">{t.hourly.next24}</div>
       </div>
 
-      <div
-        className="scrollbar-thin overflow-x-auto pb-4"
-        onScroll={(e) => setScrollPosition(e.currentTarget.scrollLeft)}
-      >
+      <div className="scrollbar-thin overflow-x-auto pb-4">
         <div
           className="flex gap-3 min-w-max p-2"
           style={{ paddingLeft: 16, paddingRight: 16 }}
         >
-          {hourly.map((hour, index) => (
-            <HourlyCard
-              key={hour.timestamp}
-              hour={hour}
-              index={index}
-              isSelected={index === selectedHour}
-              onClick={() => setSelectedHour(index)}
-            />
+          {hourly.map((hour) => (
+            <HourlyCard key={hour.timestamp} hour={hour} />
           ))}
         </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
         <div className="text-xs text-slate-300">
-          {t.hourly.selected}: {hourly[selectedHour] ? `${hourly[selectedHour].timeLabel}:00` : '—'}
+          {t.hourly.selected}: {selected ? `${selected.timeLabel}:${minuteZero}` : '—'}
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
           <span>{t.hourly.now}</span>
@@ -70,28 +58,14 @@ export function HourlyForecast({ hourly }: HourlyForecastProps) {
   );
 }
 
-interface HourlyCardProps {
-  hour: HourlyForecastItem;
-  index: number;
-  isSelected: boolean;
-  onClick: () => void;
-}
-
-function HourlyCard({ hour, isSelected, onClick }: HourlyCardProps) {
+function HourlyCard({ hour }: { hour: HourlyForecastItem }) {
   const { t, formatNumber } = useLocale();
+  const minuteZero = formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false });
 
   return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-3 rounded-lg transition-all duration-200 min-w-20 ${
-        isSelected
-          ? 'glass-strong ring-2 ring-cyan-400/50 shadow-lg shadow-cyan-400/10'
-          : 'glass hover:bg-white/5'
-      }`}
-      style={{ transform: isSelected ? 'scale(1.05)' : 'scale(1)' }}
-    >
+    <div className="flex flex-col items-center gap-2 p-3 rounded-lg min-w-20 glass">
       <div className="text-xs font-medium text-slate-300" dir="ltr">
-        {hour.timeLabel}:{formatNumber(0, { minimumIntegerDigits: 2, useGrouping: false })}
+        {hour.timeLabel}:{minuteZero}
       </div>
       <div className="text-3xl">{hour.icon}</div>
       <div className="text-lg font-bold text-white">{formatNumber(hour.temp)}°</div>
@@ -99,6 +73,6 @@ function HourlyCard({ hour, isSelected, onClick }: HourlyCardProps) {
       <div className="text-xs text-slate-300">
         {formatNumber(hour.windSpeed)} {t.units.kmh}
       </div>
-    </button>
+    </div>
   );
 }

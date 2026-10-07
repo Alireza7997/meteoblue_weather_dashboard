@@ -1,6 +1,7 @@
 'use client';
 
 import type { DailyForecastItem } from '@/lib/utils';
+import { resolveSelectedDay } from '@/lib/utils';
 import { useWeatherStore } from '@/lib/store';
 import { useLocale } from '@/hooks/useLocale';
 
@@ -9,9 +10,12 @@ interface DailyForecastProps {
   timezoneOffset: number;
 }
 
-export function DailyForecast({ daily, timezoneOffset }: DailyForecastProps) {
+export function DailyForecast({ daily }: DailyForecastProps) {
   const { selectedDate, setSelectedDate } = useWeatherStore();
   const { t } = useLocale();
+
+  // Selection is keyed on the day timestamp so it survives a locale switch.
+  const selected = resolveSelectedDay(selectedDate, daily);
 
   return (
     <div className="panel">
@@ -23,8 +27,8 @@ export function DailyForecast({ daily, timezoneOffset }: DailyForecastProps) {
             key={day.timestamp}
             day={day}
             index={index}
-            isSelected={day.date === selectedDate}
-            onClick={() => setSelectedDate(day.date)}
+            isSelected={selected?.timestamp === day.timestamp}
+            onClick={() => setSelectedDate(String(day.timestamp))}
           />
         ))}
       </div>
@@ -39,10 +43,9 @@ interface DailyCardProps {
   onClick: () => void;
 }
 
-function DailyCard({ day, index, isSelected, onClick }: DailyCardProps) {
-  const { t, formatNumber, locale } = useLocale();
+function DailyCard({ day, isSelected, onClick }: DailyCardProps) {
+  const { t, formatNumber } = useLocale();
   const uvLabel = day.uvi < 3 ? t.uv.low : day.uvi < 6 ? t.uv.moderate : t.uv.high;
-  const separator = locale === 'fa' ? '،' : ',';
 
   return (
     <button
@@ -54,8 +57,8 @@ function DailyCard({ day, index, isSelected, onClick }: DailyCardProps) {
       }`}
     >
       <div className="w-14 sm:w-20 shrink-0">
-        <div className="font-medium text-white text-sm sm:text-base">{day.date.split(separator)[0]}</div>
-        <div className="text-xs text-slate-300 truncate">{day.dateShort}</div>
+        <div className="font-medium text-white text-sm sm:text-base">{day.dayLabel}</div>
+        <div className="text-xs text-slate-300 truncate">{day.dateLabel}</div>
       </div>
 
       <div className="text-2xl sm:text-3xl shrink-0">{day.icon}</div>

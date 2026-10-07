@@ -27,7 +27,7 @@ export function useWeather(location: Location | null): UseWeatherReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { selectedDate, selectedHour, setLoading, setError: setStoreError } = useWeatherStore();
+  const { setLoading, setError: setStoreError } = useWeatherStore();
   const locale = useLocaleStore((state) => state.locale);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -83,6 +83,8 @@ export function useWeather(location: Location | null): UseWeatherReturn {
     };
   }, [fetchData]);
 
+  // Derived data only depends on the raw payload and the locale — selection
+  // is read at render time by the panels that need it.
   useEffect(() => {
     if (weatherData) {
       setCurrentWeather(getCurrentWeatherInfo(weatherData.current, weatherData.timezone_offset, locale));
@@ -90,7 +92,7 @@ export function useWeather(location: Location | null): UseWeatherReturn {
       setDailyForecast(processDailyForecast(weatherData.daily, weatherData.timezone_offset, locale));
       setInsights(generateWeatherInsights(weatherData.current, weatherData.hourly, weatherData.daily, weatherData.timezone_offset, locale));
     }
-  }, [weatherData, selectedDate, selectedHour, locale]);
+  }, [weatherData, locale]);
 
   return {
     weatherData,
@@ -106,11 +108,12 @@ export function useWeather(location: Location | null): UseWeatherReturn {
 
 export function useReverseGeocoding() {
   const [isLoading, setIsLoading] = useState(false);
+  const locale = useLocaleStore((state) => state.locale);
 
   const reverseGeocode = useCallback(async (lat: number, lon: number): Promise<Location | null> => {
     setIsLoading(true);
     try {
-      const result = await fetchReverseGeocoding(lat, lon);
+      const result = await fetchReverseGeocoding(lat, lon, locale === 'fa' ? 'fa' : 'en');
       if (result) {
         return {
           latitude: result.lat,
@@ -128,7 +131,7 @@ export function useReverseGeocoding() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   return { reverseGeocode, isLoading };
 }

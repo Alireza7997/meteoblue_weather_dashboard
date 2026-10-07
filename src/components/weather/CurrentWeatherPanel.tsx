@@ -2,24 +2,14 @@
 
 import { useRef } from 'react';
 import { motion, useMotionTemplate, useScroll, useSpring, useTransform } from 'framer-motion';
-import { WEATHER_ICONS } from '@/lib/constants';
 import { useLocale } from '@/hooks/useLocale';
 import { useDashboardScroll } from '@/hooks/useDashboardScroll';
-import { normalizeUvCategory } from '@/lib/utils';
+import { normalizeUvCategory, type HeroWeather } from '@/lib/utils';
 
 interface CurrentWeatherPanelProps {
   locationName: string;
-  current: {
-    temp: string;
-    condition: string;
-    icon: string;
-    humidity: string;
-    wind: string;
-    windDir: string;
-    pressure: string;
-    uv: string;
-    clouds: string;
-  } | null;
+  /** Live conditions, or a preview of the day picked in the 7-day forecast. */
+  current: HeroWeather | null;
   isLoading?: boolean;
 }
 
@@ -34,9 +24,11 @@ interface StatItemProps {
 }
 
 function StatItem({ icon, label, value, color, delay, highlight, className = '' }: StatItemProps) {
+  // Deliberately no `w-full`: as a grid item the card stretches to its cell on
+  // its own, which keeps `w-*` overrides (the centred lone UV tile) conflict-free.
   return (
     <div
-      className={`group relative rounded-2xl cursor-default animate-fade-in transition-all duration-300 w-full min-w-0 ${className}`}
+      className={`group relative rounded-2xl cursor-default animate-fade-in transition-all duration-300 min-w-0 ${className}`}
       style={{
         animationDelay: `${delay}ms`,
         transformStyle: 'preserve-3d',
@@ -133,6 +125,26 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
     );
   }
 
+  const uvCategory = normalizeUvCategory(current.uv);
+  const uvLabel = t.uv[uvCategory.toLowerCase() as 'low' | 'moderate' | 'high'];
+  // Tiles are humidity, wind and UV, plus pressure (live only) and rain chance.
+  const statCount = 3 + (current.pressure ? 1 : 0) + (current.precipChance ? 1 : 0);
+  // Columns match the tile count so every row is full — a short last row would
+  // leave the grid visually off-centre. Literal class strings keep Tailwind's
+  // scanner happy.
+  const statCols =
+    statCount >= 5
+      ? 'grid-cols-2 sm:grid-cols-5'
+      : statCount === 4
+        ? 'grid-cols-2 sm:grid-cols-4'
+        : statCount === 3
+          ? 'grid-cols-2 sm:grid-cols-3'
+          : 'grid-cols-2';
+  // UV renders last, so with an odd tile count it would be left on its own in
+  // the final mobile row — span that row and centre itself inside it instead.
+  const uvClassName =
+    statCount % 2 === 1 ? 'col-span-2 justify-self-center w-1/2 sm:col-span-1 sm:w-full' : '';
+
   return (
     <motion.div ref={panelRef} className="relative py-6" style={{ y, scale, opacity, filter }}>
       {/* Location name — opaque backdrop so the sun/moon glow behind it can't wash out the text */}
@@ -156,38 +168,53 @@ export function CurrentWeatherPanel({ locationName, current, isLoading }: Curren
 
       {/* Temperature + condition */}
       <div className="text-center mb-6 sm:mb-8 z-10" style={{ perspective: '1000px' }}>
+        {current.dayLabel && (
+          <div className="mb-3 inline-block glass rounded-full px-3 py-1 text-xs sm:text-sm text-slate-200">
+            {current.dayLabel}
+          </div>
+        )}
         <div
           className="text-6xl sm:text-7xl md:text-8xl font-thin text-white tracking-tighter mb-2 drop-shadow-2xl transition-transform duration-500 hover:scale-105"
           style={{ textShadow: '0 0 60px rgba(255,255,255,0.2), 0 4px 20px rgba(0,0,0,0.5)' }}
         >
           {current.temp}
+          {current.tempMin && (
+            <span className="text-[0.4em] font-light text-white/60"> / {current.tempMin}</span>
+          )}
         </div>
         <div className="text-lg sm:text-xl md:text-2xl text-white/80 drop-shadow-lg px-2" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.4)' }}>
-          {WEATHER_ICONS[current.icon as keyof typeof WEATHER_ICONS] || '🌤️'} {current.condition}
+          {current.icon} {current.condition}
         </div>
       </div>
 
-      {/* Stat items row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 z-10" style={{ perspective: '1000px' }}>
+      {/* Stat items row — pressure only exists for live conditions */}
+      <div
+        className={`grid ${statCols} gap-3 mx-auto w-full max-w-4xl z-10`}
+        style={{ perspective: '1000px' }}
+      >
         <StatItem icon="💧" label={t.stats.humidity} value={current.humidity} color="#38bdf8" delay={100} />
-        <StatItem icon="💨" label={t.stats.wind} value={`${current.wind} ${current.windDir}`} color="#a78bfa" delay={150} />
-        <StatItem icon="📊" label={t.stats.pressure} value={current.pressure} color="#f472b6" delay={200} />
-        <StatItem icon="☁️" label={t.stats.clouds} value={current.clouds} color="#94a3b8" delay={250} />
-        {(() => {
-          const uvCategory = normalizeUvCategory(current.uv);
-          const uvLabel = t.uv[uvCategory.toLowerCase() as 'low' | 'moderate' | 'high'];
-          return (
-            <StatItem
-              icon="🔆"
-              label={t.stats.uv}
-              value={uvLabel}
-              color={uvCategory === 'Low' ? '#4ade80' : uvCategory === 'Moderate' ? '#fbbf24' : '#ef4444'}
-              delay={300}
-              highlight={uvCategory === 'High'}
-              className="col-span-2 sm:col-span-1"
-            />
-          );
-        })()}
+        <StatItem
+          icon="💨"
+          label={t.stats.wind}
+          value={current.windDir ? `${current.wind} ${current.windDir}` : current.wind}
+          color="#a78bfa"
+          delay={150}
+        />
+        {current.pressure && (
+          <StatItem icon="📊" label={t.stats.pressure} value={current.pressure} color="#f472b6" delay={200} />
+        )}
+        {current.precipChance && (
+          <StatItem icon="🌧" label={t.stats.precipChance} value={current.precipChance} color="#60a5fa" delay={250} />
+        )}
+        <StatItem
+          icon="🔆"
+          label={t.stats.uv}
+          value={uvLabel}
+          color={uvCategory === 'Low' ? '#4ade80' : uvCategory === 'Moderate' ? '#fbbf24' : '#ef4444'}
+          delay={300}
+          highlight={uvCategory === 'High'}
+          className={uvClassName}
+        />
       </div>
     </motion.div>
   );
